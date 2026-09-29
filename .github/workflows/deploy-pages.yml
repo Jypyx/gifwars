@@ -1,9 +1,16 @@
 name: Deploy GitHub Pages
+run-name: Pages ← ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Branche (ou tag / SHA) à déployer sur GitHub Pages
+        required: true
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -18,9 +25,14 @@ jobs:
     permissions:
       contents: read
       pages: read
+    env:
+      # Push sur main → ce commit ; lancement manuel → la branche saisie dans « Run workflow ».
+      DEPLOY_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ env.DEPLOY_REF }}
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -40,13 +52,22 @@ jobs:
           VITE_PUSH_SUBSCRIBE_URL: ${{ vars.VITE_PUSH_SUBSCRIBE_URL }}
         run: |
           npm run build
-          npm run verify:build -- "$GIFWARS_BASE_PATH"
+          npm run --if-present verify:build -- "$GIFWARS_BASE_PATH"
+      - name: Summary
+        run: |
+          {
+            echo "### Déploiement GitHub Pages"
+            echo "- Référence : \`$DEPLOY_REF\`"
+            echo "- Commit : \`$(git rev-parse HEAD)\` — $(git log -1 --format=%s)"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
+    # La définition du workflow doit venir de main (« Use workflow from: main ») ;
+    # la branche réellement déployée est celle choisie dans l'entrée `ref`.
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest

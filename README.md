@@ -19,7 +19,9 @@ Le dépôt `Jypyx/gifwars` est prévu pour l'adresse **https://jypyx.github.io/g
 1. Dans le dépôt GitHub, ouvrir **Settings → Pages → Build and deployment** et choisir **GitHub Actions** comme source.
 2. Committer ces fichiers et les pousser sur `main`.
 3. Dans **Actions → Deploy GitHub Pages**, suivre le workflow. Il installe les dépendances avec `npm ci`, exécute les tests, compile, vérifie les chemins de publication et déploie le dossier `dist/`.
-4. Ouvrir l'URL affichée par le job `deploy`. Le workflow peut aussi être relancé avec **Run workflow** sur `main`.
+4. Ouvrir l'URL affichée par le job `deploy`.
+
+Chaque push sur `main` redéploie `main`. Pour publier une autre branche, ouvrir **Actions → Deploy GitHub Pages → Run workflow**, laisser **Use workflow from** sur `main` et saisir la branche dans le champ **Branche (ou tag / SHA) à déployer sur GitHub Pages**. Le workflow de `main` construit alors le code de cette branche ; le résumé du run indique la référence et le commit publiés. La branche choisie doit fournir les scripts `test` et `build` et gérer `GIFWARS_BASE_PATH` ; `verify:build` est exécuté s'il existe. Le prochain push sur `main` republie `main`.
 
 Le workflow utilise le jeton `GITHUB_TOKEN` fourni par GitHub ; aucun jeton personnel n'est nécessaire. Pages doit être disponible pour le dépôt et activé avant le premier lancement. Voir les [instructions officielles GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
