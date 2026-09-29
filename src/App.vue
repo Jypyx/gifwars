@@ -5,11 +5,13 @@ import GameCanvas from './components/GameCanvas.vue'
 import GameHud from './components/GameHud.vue'
 import PlayerHand from './components/PlayerHand.vue'
 import MasterPicker from './components/MasterPicker.vue'
+import SplashScreen from './components/SplashScreen.vue'
 import { playCue } from './services/audio'
 import { notify, outcomeNotice } from './services/notifications'
 import type { GameEvent, MasterKind } from './game/types'
 
 const store = useGameStore()
+const started = ref(false)
 const message = ref('')
 let reminderTimer: ReturnType<typeof setTimeout> | null = null
 let playbackToken = 0
@@ -46,6 +48,7 @@ function chooseMaster(kind: MasterKind): void {
   void notify('start')
 }
 function restart(): void { playbackToken++; store.newGame(); message.value = '' }
+function startGame(): void { store.newGame(); started.value = true }
 
 watch(() => [store.game.phase, store.game.round, store.busy] as const, () => {
   if (reminderTimer) clearTimeout(reminderTimer)
@@ -78,7 +81,8 @@ onBeforeUnmount(() => { playbackToken++; if (reminderTimer) clearTimeout(reminde
 
 <template>
   <div class="arena-backdrop"><div class="ambient-grid" /><div class="ambient-halo" /></div>
-  <main class="game-shell">
+  <SplashScreen v-if="!started" @start="startGame" />
+  <main v-else class="game-shell">
     <GameHud />
     <div class="arena-section">
       <div class="arena-label left">● ENEMY TERRITORY</div>
