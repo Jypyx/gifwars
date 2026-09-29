@@ -1,18 +1,32 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch, ref } from 'vue'
+import { computed, onBeforeUnmount, watch, ref } from 'vue'
 import { useGameStore } from './stores/gameStore'
 import GameCanvas from './components/GameCanvas.vue'
 import GameHud from './components/GameHud.vue'
 import PlayerHand from './components/PlayerHand.vue'
 import MasterPicker from './components/MasterPicker.vue'
 import SplashScreen from './components/SplashScreen.vue'
+import GifDetailsPopover from './components/GifDetailsPopover.vue'
 import { playCue } from './services/audio'
 import { notify, outcomeNotice } from './services/notifications'
-import type { GameEvent, MasterKind } from './game/types'
+import type { Archetype, GameEvent, MasterKind, Unit, UnitKind } from './game/types'
 
 const store = useGameStore()
 const started = ref(false)
 const message = ref('')
+const hovered = ref<{ kind: UnitKind; source: 'hand' | 'board'; id: string; x: number; y: number } | null>(null)
+const hoveredUnit = computed(() => hovered.value?.source === 'board'
+  ? store.game.units.find(unit => unit.id === hovered.value?.id && !unit.faceDown) : null)
+const showPopover = computed(() => hovered.value?.source === 'board' ? !!hoveredUnit.value
+  : hovered.value?.source === 'hand' && store.game.players.player.hand.some(card => card.id === hovered.value?.id))
+
+function hoverCard(id: string, kind: Archetype, x: number, y: number): void {
+  hovered.value = { source: 'hand', id, kind, x, y }
+}
+function hoverUnit(unit: Unit, x: number, y: number): void {
+  hovered.value = { source: 'board', id: unit.id, kind: unit.kind, x, y }
+}
+function hidePopover(): void { hovered.value = null }
 let reminderTimer: ReturnType<typeof setTimeout> | null = null
 let playbackToken = 0
 
@@ -35,6 +49,7 @@ async function playRound(): Promise<void> {
 }
 
 function place(row: number, col: number): void {
+  hidePopover()
   const result = store.commit(row, col)
   if (!result.ok) { message.value = result.reason; playCue('hit'); return }
   message.value = ''
@@ -47,8 +62,8 @@ function chooseMaster(kind: MasterKind): void {
   playCue('master')
   void notify('start')
 }
-function restart(): void { playbackToken++; store.newGame(); message.value = '' }
-function startGame(): void { store.newGame(); started.value = true }
+function restart(): void { playbackToken++; store.newGame(); message.value = ''; hidePopover() }
+function startGame(): void { store.newGame(); started.value = true; hidePopover() }
 
 watch(() => [store.game.phase, store.game.round, store.busy] as const, () => {
   if (reminderTimer) clearTimeout(reminderTimer)
@@ -87,7 +102,7 @@ onBeforeUnmount(() => { playbackToken++; if (reminderTimer) clearTimeout(reminde
     <div class="arena-section">
       <div class="arena-label left">● ENEMY TERRITORY</div>
       <div class="arena-label right">PLAYER TERRITORY ●</div>
-      <GameCanvas @cell="place" />
+      <GameCanvas @cell="place" @hover="hoverUnit" @leave="hidePopover" />
       <div class="board-corner top-left" /><div class="board-corner top-right" /><div class="board-corner bottom-left" /><div class="board-corner bottom-right" />
       <div v-if="message" class="game-toast" role="alert">{{ message }}</div>
     </div>
@@ -97,7 +112,7 @@ onBeforeUnmount(() => { playbackToken++; if (reminderTimer) clearTimeout(reminde
         <button v-if="store.game.phase === 'placement' && !store.hasAnyMove && !store.busy" class="arcade-button small" @click="place(0, 0)">CONTINUER ›</button>
         <span v-else class="phase-chevrons">⌁⌁⌁</span>
       </div>
-      <PlayerHand />
+      <PlayerHand @hover="hoverCard" @leave="hidePopover" />
     </div>
     <MasterPicker v-if="store.game.phase === 'master-selection'" :error="message" @choose="chooseMaster" />
     <div v-if="store.game.phase === 'finished'" class="result-overlay absolute inset-0 flex items-center justify-center">
@@ -110,4 +125,5 @@ onBeforeUnmount(() => { playbackToken++; if (reminderTimer) clearTimeout(reminde
       </div>
     </div>
   </main>
+  <GifDetailsPopover v-if="hovered && showPopover" :kind="hovered.kind" :unit="hoveredUnit" :x="hovered.x" :y="hovered.y" />
 </template>

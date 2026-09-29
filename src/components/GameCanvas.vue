@@ -8,7 +8,11 @@ import { useGameStore } from '../stores/gameStore'
 import { destroyDisplayChildren, destroyDisplayTree } from '../rendering/dispose'
 import { assetUrl } from '../services/urls'
 
-const emit = defineEmits<{ cell: [row: number, col: number] }>()
+const emit = defineEmits<{
+  cell: [row: number, col: number]
+  hover: [unit: Unit, x: number, y: number]
+  leave: []
+}>()
 const holder = ref<HTMLElement | null>(null)
 const store = useGameStore()
 const app = new Application()
@@ -34,6 +38,19 @@ let resizeObserver: ResizeObserver | null = null
 
 const color = (hex: string): number => Number.parseInt(hex.slice(1), 16)
 const pos = (at: Cell) => ({ x: X + at.col * CW + CW / 2, y: Y + at.row * CH + CH / 2 })
+
+function hoverCell(event: PointerEvent): void {
+  if (!holder.value || event.pointerType === 'touch') return
+  const bounds = holder.value.getBoundingClientRect()
+  const x = (event.clientX - bounds.left) * W / bounds.width
+  const y = (event.clientY - bounds.top) * H / bounds.height
+  const col = Math.floor((x - X) / CW)
+  const row = Math.floor((y - Y) / CH)
+  const unit = store.game.units.find(candidate => candidate.row === row && candidate.col === col)
+  if (unit && !unit.faceDown && col >= 0 && col < 3 && row >= 0 && row < 10) {
+    emit('hover', unit, event.clientX, event.clientY)
+  } else emit('leave')
+}
 
 function label(text: string, size: number, fill: number, weight: 'bold' | 'normal' = 'bold'): Text {
   return new Text({ text, style: { fontFamily: 'monospace', fontSize: size, fill, fontWeight: weight, letterSpacing: 1 } })
@@ -319,4 +336,4 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<template><div ref="holder" class="canvas-holder" role="img" aria-label="Plateau de Gif Wars : trois colonnes, cinq lignes par camp" /></template>
+<template><div ref="holder" class="canvas-holder" role="img" aria-label="Plateau de Gif Wars : trois colonnes, cinq lignes par camp" @pointermove="hoverCell" @pointerleave="emit('leave')" /></template>

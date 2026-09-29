@@ -65,7 +65,7 @@ button:focus-visible { outline: 2px solid #f4dc7b; outline-offset: 3px }
 .hand-scroll { display: flex; gap: 7px; height: 92px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 2px 2px 5px; overscroll-behavior-x: contain }.hand-scroll::-webkit-scrollbar { display: none }
 .hand-card { position: relative; display: flex; flex-direction: column; align-items: stretch; flex: 0 0 68px; height: 85px; padding: 3px; border: 2px solid var(--unit-color); background: #15202e; box-shadow: 2px 2px #050a11; color: #f6eddd; text-align: left; transition: transform .13s ease, box-shadow .13s }
 .hand-card:hover, .hand-card.active { transform: translateY(-4px); box-shadow: 0 0 12px var(--unit-color), 2px 5px #050a11; z-index: 2 }.hand-card.active { border-color: #fff4c6 }
-.hand-card:disabled { opacity: .75 }.hand-card:disabled:hover { transform: none; box-shadow: 2px 2px #050a11 }
+.hand-card[aria-disabled="true"] { opacity: .75; cursor: not-allowed }.hand-card[aria-disabled="true"]:hover { transform: none; box-shadow: 2px 2px #050a11 }
 .card-corner { display: flex; justify-content: space-between; color: var(--unit-color); font-size: 6px; font-weight: bold }.card-corner em { font-style: normal; font-size: 8px }
 .card-portrait { position: relative; display: grid; place-items: center; flex: 1; min-height: 0; margin: 2px 0; overflow: hidden; background: radial-gradient(circle at 50% 85%, color-mix(in srgb, var(--unit-color), transparent 55%), #101a29 70%); border: 1px solid #ffffff22 }
 .gif-portrait { display: block; width: 43px; height: 43px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(2px 3px 0 #080d17) }
@@ -76,6 +76,15 @@ button:focus-visible { outline: 2px solid #f4dc7b; outline-offset: 3px }
 .hand-card strong { display: block; color: var(--unit-color); font-size: 7px; line-height: 11px; text-transform: uppercase; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .card-stats { display: flex; justify-content: space-between; font-size: 7px; font-weight: bold; letter-spacing: -1px; white-space: nowrap }
 .card-stats span:first-child { color: #ff9e9e }.card-stats span:nth-child(2) { color: #ffd778 }.card-stats span:last-child { color: #9fe9fa }
+.gif-popover { position: fixed; z-index: 100; pointer-events: none; display: grid; grid-template-columns: 78px 1fr; gap: 10px; width: 248px; padding: 10px; border: 2px solid var(--unit-color); background: linear-gradient(145deg, #20334a, #101a2a); color: #f7f0df; box-shadow: 5px 5px 0 #060b15, 0 0 22px color-mix(in srgb, var(--unit-color), transparent 65%) }
+.gif-popover-portrait { display: grid; place-items: center; width: 78px; height: 78px; border: 1px solid var(--unit-color); background: radial-gradient(circle at 50% 75%, color-mix(in srgb, var(--unit-color), transparent 60%), #0e1928 75%) }
+.gif-popover-portrait img { width: 70px; height: 70px; object-fit: contain; image-rendering: pixelated }
+.gif-popover-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; gap: 6px }
+.gif-popover-type { color: #a9c8d0; font-size: 10px; font-weight: bold; line-height: 1.35; letter-spacing: .3px }
+.gif-popover-info strong { color: var(--unit-color); font-size: 18px; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere }
+.gif-popover-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; border-top: 1px solid #7493a466; padding-top: 8px }
+.gif-popover-stats span { display: flex; flex-direction: column; gap: 3px; color: #fff3d5; font-size: 15px; font-weight: bold; text-align: center }
+.gif-popover-stats b { color: var(--unit-color); font-size: 10px; letter-spacing: 1px }
 .master-overlay, .result-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10; padding: 18px; background: #070b16df; backdrop-filter: blur(5px) }
 .master-panel { width: 100%; max-height: 96%; padding: 18px 16px 15px; border: 2px solid #e4c277; background: linear-gradient(150deg, #19273a, #111624 70%); box-shadow: 6px 6px 0 #090d18, 0 0 46px #e9bb6133; overflow: auto; scrollbar-width: none }.master-panel::-webkit-scrollbar { display: none }
 .overlay-kicker { color: #71ced4; font-size: 9px; font-weight: bold; letter-spacing: 1.1px }.blink-square { display: inline-block; width: 7px; height: 7px; background: #f6ce70; animation: pulse .7s infinite }
@@ -95,3 +104,18 @@ button:focus-visible { outline: 2px solid #f4dc7b; outline-offset: 3px }
 @keyframes pulse { 50% { opacity: .25 } } @keyframes glow { to { box-shadow: 0 0 19px #eac679aa, 3px 3px 0 #060911 } } @keyframes sprite-bob { 50% { transform: translateY(-2px) } } @keyframes result-pop { to { transform: translateY(-8px) rotate(-5deg) } }
 @media (max-height: 730px) { .hud-top { min-height: 48px; padding-block: 5px }.duel-bar { height: 39px; margin-top: 4px }.avatar-chip { width: 29px; height: 29px }.command-strip { min-height: 39px }.bottom-panel { min-height: 151px }.command-row { height: 37px }.hand-scroll { height: 80px }.hand-card { height: 75px }.pixel-head { top: 8px }.master-option { min-height: 55px }.master-panel { padding-top: 12px }.overlay-title { margin-block: 8px }.master-list { gap: 5px } }
 @media (max-height: 600px) { .hud-top { min-height: 40px }.duel-bar { height: 34px }.command-strip { min-height: 34px }.master-chip { height: 29px }.bottom-panel { min-height: 128px }.hand-scroll { height: 69px }.hand-card { height: 64px }.card-portrait { margin: 0 }.pixel-head { top: 4px } }
+@media (min-width: 700px) and (hover: hover) and (pointer: fine) {
+  .game-shell { width: min(100vw, 560px, 62dvh) }
+  .brand-sub, .master-copy small, .command-copy small, .hand-hint { font-size: 10px }
+  .round-pill, .duel-label, .master-copy b, .hand-head { font-size: 12px }
+  .life-word, .arena-label { font-size: 10px }
+  .command-copy b { font-size: 13px }
+  .card-corner { font-size: 9px }
+  .hand-card strong, .card-stats { font-size: 10px; letter-spacing: 0 }
+}
+@media (min-width: 700px) and (min-height: 800px) and (hover: hover) and (pointer: fine) {
+  .bottom-panel { min-height: 190px }
+  .hand-scroll { height: 109px }
+  .hand-card { flex-basis: 78px; height: 100px; padding: 4px }
+  .gif-portrait { width: 51px; height: 51px }
+}
