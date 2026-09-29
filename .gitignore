@@ -1,0 +1,74 @@
+# Dependencies and package-manager caches (keep lockfiles tracked)
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
+.yarn/build-state.yml
+
+# Builds and framework caches
+/dist/
+/build/
+/out/
+.next/
+.nuxt/
+.output/
+.svelte-kit/
+.astro/
+.cache/
+.parcel-cache/
+.turbo/
+.vite/
+*.tsbuildinfo
+
+# Tests and coverage
+coverage/
+.nyc_output/
+/playwright-report/
+/test-results/
+/blob-report/
+
+# Local environment and credentials (keep sanitized templates tracked)
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+!.env.template
+!.env.*.template
+*.pem
+*.key
+
+# Logs and temporary files
+*.log
+logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Local deployment state
+.vercel/
+.netlify/
+.wrangler/
+
+# Editor settings (keep shareable VS Code configuration tracked)
+.idea/
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/*.code-snippets
+
+# Operating system metadata
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
