@@ -6,6 +6,7 @@ import { CATALOG } from '../game/catalog'
 import type { Cell, GameEvent, Unit, UnitKind } from '../game/types'
 import { useGameStore } from '../stores/gameStore'
 import { destroyDisplayChildren, destroyDisplayTree } from '../rendering/dispose'
+import { assetUrl } from '../services/urls'
 
 const emit = defineEmits<{ cell: [row: number, col: number] }>()
 const holder = ref<HTMLElement | null>(null)
@@ -273,7 +274,7 @@ onMounted(async () => {
   app.ticker.add(ticker => tick(ticker.deltaMS))
   void Promise.all((Object.keys(CATALOG) as UnitKind[]).map(async kind => {
     try {
-      const response = await fetch(`/gifs/${kind}.gif`)
+      const response = await fetch(assetUrl(`gifs/${kind}.gif`))
       if (!response.ok) return
       const source = GifSource.from(await response.arrayBuffer(), { scaleMode: 'nearest' })
       if (!mounted) { source.destroy(); return }

@@ -1,4 +1,5 @@
 import type { Side } from '../game/types'
+import { assetUrl } from './urls'
 
 export type NoticeKind = 'start' | 'reminder' | 'victory' | 'defeat'
 const MESSAGES: Record<NoticeKind, { title: string; body: string; tag: string }> = {
@@ -23,8 +24,8 @@ export async function notify(kind: NoticeKind): Promise<boolean> {
   try {
     const registration = await navigator.serviceWorker.ready
     await registration.showNotification(message.title, {
-      body: message.body, tag: message.tag, icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png', data: { url: '/' }
+      body: message.body, tag: message.tag, icon: assetUrl('icons/icon-192.png'),
+      badge: assetUrl('icons/icon-192.png'), data: { url: assetUrl('') }
     })
     return true
   } catch { return false }

@@ -2,6 +2,7 @@
 import { useGameStore } from '../stores/gameStore'
 import { CATALOG } from '../game/catalog'
 import { playCue } from '../services/audio'
+import { assetUrl } from '../services/urls'
 
 const store = useGameStore()
 function choose(id: string): void {
@@ -19,7 +20,7 @@ function choose(id: string): void {
       :style="{ '--unit-color': CATALOG[card.archetype].color }"
       :disabled="store.busy || store.game.phase !== 'placement'" @click="choose(card.id)">
       <span class="card-corner">GIF <em>✦</em></span>
-      <span class="card-portrait"><img class="gif-portrait" :src="`/gifs/${card.archetype}.gif`" alt="" draggable="false" /><span class="card-glyph">{{ CATALOG[card.archetype].glyph }}</span></span>
+      <span class="card-portrait"><img class="gif-portrait" :src="assetUrl(`gifs/${card.archetype}.gif`)" alt="" draggable="false" /><span class="card-glyph">{{ CATALOG[card.archetype].glyph }}</span></span>
       <strong>{{ CATALOG[card.archetype].name }}</strong>
       <span class="card-stats"><span>♥ {{ CATALOG[card.archetype].hp }}</span><span>⚔ {{ CATALOG[card.archetype].attack }}</span><span>◎ {{ CATALOG[card.archetype].range }}</span></span>
     </button>

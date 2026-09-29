@@ -12,6 +12,29 @@ npm run dev
 
 `npm run build` produit la PWA dans `dist/`; `npm run preview` la sert localement. `npm test` exécute les tests du moteur. Node 22.12+ est nécessaire. Les PNG/GIFs générés sont aussi conservés dans `public/`, donc `npm run assets` sert surtout à les régénérer.
 
+## Déployer sur GitHub Pages
+
+Le dépôt `Jypyx/gifwars` est prévu pour l'adresse **https://jypyx.github.io/gifwars/**.
+
+1. Dans le dépôt GitHub, ouvrir **Settings → Pages → Build and deployment** et choisir **GitHub Actions** comme source.
+2. Committer ces fichiers et les pousser sur `main`.
+3. Dans **Actions → Deploy GitHub Pages**, suivre le workflow. Il installe les dépendances avec `npm ci`, exécute les tests, compile, vérifie les chemins de publication et déploie le dossier `dist/`.
+4. Ouvrir l'URL affichée par le job `deploy`. Le workflow peut aussi être relancé avec **Run workflow** sur `main`.
+
+Le workflow utilise le jeton `GITHUB_TOKEN` fourni par GitHub ; aucun jeton personnel n'est nécessaire. Pages doit être disponible pour le dépôt et activé avant le premier lancement. Voir les [instructions officielles GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
+Pour vérifier localement le même chemin de publication :
+
+```bash
+npm run build:pages
+npm run verify:build -- /gifwars/
+npm run preview:pages
+```
+
+Ouvrir **http://localhost:4173/gifwars/**. Le développement habituel (`npm run dev`) reste à la racine. Le mode `github-pages` utilise `/gifwars/` par défaut ; la variable d'environnement `GIFWARS_BASE_PATH` permet de le remplacer. Dans le workflow, cette valeur provient automatiquement de `actions/configure-pages`, ce qui prend aussi en charge un domaine personnalisé ou un autre nom de dépôt. Les assets dynamiques, le manifest et le service worker utilisent tous cette base.
+
+Les paramètres Push facultatifs `VITE_VAPID_PUBLIC_KEY` et `VITE_PUSH_SUBSCRIBE_URL` se renseignent dans **Settings → Secrets and variables → Actions → Variables**. Ces valeurs sont publiques dans le bundle ; la clé VAPID privée reste exclusivement sur le serveur Push. GitHub Pages héberge la PWA statique, pas ce serveur.
+
 ## Structure
 
 ```text

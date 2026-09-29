@@ -7,7 +7,10 @@
     "dev": "vite --host 0.0.0.0",
     "assets": "node scripts/generate-icons.mjs && node scripts/generate-gifs.mjs",
     "build": "vue-tsc -b && vite build",
+    "build:pages": "vue-tsc -b && vite build --mode github-pages",
+    "verify:build": "node scripts/verify-build.mjs",
     "preview": "vite preview --host 0.0.0.0",
+    "preview:pages": "vite preview --mode github-pages --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest"
   },
