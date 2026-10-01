@@ -11,7 +11,7 @@ src/
   types/        Types du jeu (GifCard, Attack, Synergy, état de partie…)
   config/       Règles et constantes d'équilibrage (timer, Quick Match, statuts)
   data/         Mocks : gifsData.ts (catalogue), synergies.ts, universes.ts (thèmes de cartes)
-  game/         Moteur de combat (fonctions pures, aléatoire injectable)
+  game/         Moteur de combat et IA (fonctions pures, aléatoire injectable)
     arena/      Arène PixiJS : rejoue le journal du store en animations BD
   utils/        Fonctions pures (instanciation d'un GIF, détection des synergies)
   stores/       Stores Pinia (useGameStore : partie, tours, timer)
@@ -19,7 +19,7 @@ src/
   views/        Accueil (Quick Match, catalogue) et écran de combat
 ```
 
-Mode actuel : deux joueurs sur le même écran (hot-seat).
+Modes : contre l'ordinateur (GifBot, 3 niveaux de difficulté) ou à deux sur le même écran.
 
 ## Commandes
 

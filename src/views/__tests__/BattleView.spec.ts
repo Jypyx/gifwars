@@ -80,4 +80,13 @@ describe('BattleView', () => {
     expect(store.state.phase).toBe('battle')
     expect(wrapper.find('.dialog').exists()).toBe(false)
   })
+
+  it('shows a defeat when the AI wins', async () => {
+    const { store, wrapper } = await setup()
+    store.controllers.player2 = { kind: 'ai', difficulty: 'normal' }
+    store.state.phase = 'finished'
+    store.state.winnerId = 'player2'
+    await flushPromises()
+    expect(wrapper.find('.victory-title').text()).toBe('Défaite…')
+  })
 })

@@ -17,13 +17,17 @@ const router = useRouter()
 
 const SIDES = ['player1', 'player2'] as const
 const tab = ref<'attack' | 'switch'>('attack')
-const arenaBusy = ref(false)
 
 const state = computed(() => store.state)
-const controlsDisabled = computed(() => arenaBusy.value || state.value.phase !== 'battle')
-const replacingPlayerId = computed<PlayerId | null>(() =>
-  state.value.phase === 'awaitingReplacement' ? (state.value.pendingReplacements[0] ?? null) : null,
+const busy = computed(() => store.presentationBusy)
+const controlsDisabled = computed(() => busy.value || !store.isHumanTurn)
+/** Only humans get the replacement dialog: the AI picks its own. */
+const replacingPlayerId = computed<PlayerId | null>(() => store.humanReplacementFor)
+const aiThinking = computed(
+  () => state.value.phase === 'battle' && store.isAi(state.value.currentPlayerId),
 )
+/** Against the AI, the human's point of view decides between victory and defeat. */
+const humanLost = computed(() => store.isVsAi && !!store.winner && store.isAi(store.winner.id))
 const currentActive = computed(() => store.activeGifs[state.value.currentPlayerId])
 
 // Each player starts their turn on the attack tab.
@@ -49,7 +53,10 @@ function act(action: () => void) {
 
 function rematch() {
   const { player1, player2 } = state.value.players
-  store.startQuickMatch({ playerNames: { player1: player1.name, player2: player2.name } })
+  store.startQuickMatch({
+    playerNames: { player1: player1.name, player2: player2.name },
+    controllers: { ...store.controllers },
+  })
 }
 
 function quit() {
@@ -75,7 +82,7 @@ function quit() {
         :key="store.matchId"
         :players="state.players"
         :log="state.log"
-        @busy="arenaBusy = $event"
+        @busy="store.setPresentationBusy($event)"
       />
     </section>
 
@@ -110,7 +117,11 @@ function quit() {
     </section>
 
     <section class="comic-panel controls-panel" aria-label="Actions">
-      <div class="tabs" role="tablist">
+      <p v-if="aiThinking" class="thinking" role="status">
+        <span class="comic-caption">{{ store.currentPlayer.name }} réfléchit</span>
+        <span class="dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+      </p>
+      <div v-else class="tabs" role="tablist">
         <button
           type="button"
           role="tab"
@@ -132,13 +143,13 @@ function quit() {
       </div>
 
       <AttackPanel
-        v-if="tab === 'attack' && currentActive"
+        v-if="!aiThinking && tab === 'attack' && currentActive"
         :gif="currentActive"
         :disabled="controlsDisabled"
         :error-for="(attackId) => store.actionError({ kind: 'attack', attackId })"
         @attack="(id) => act(() => store.attack(id))"
       />
-      <template v-else-if="tab === 'switch'">
+      <template v-else-if="!aiThinking && tab === 'switch'">
         <p class="hint">Changer de GIF consomme ton tour.</p>
         <TeamBench
           :team="store.currentPlayer.team"
@@ -156,7 +167,7 @@ function quit() {
     </section>
 
     <!-- Forced replacement after a K.O. (shown once the K.O. animation is over). -->
-    <div v-if="replacingPlayerId && !arenaBusy" class="overlay">
+    <div v-if="replacingPlayerId && !busy" class="overlay">
       <div class="comic-panel dialog" :class="replacingPlayerId" role="dialog" aria-modal="true">
         <span class="comic-caption">K.O. !</span>
         <h2 class="dialog-title">
@@ -173,14 +184,14 @@ function quit() {
       </div>
     </div>
 
-    <div v-if="state.phase === 'finished' && store.winner && !arenaBusy" class="overlay">
+    <div v-if="state.phase === 'finished' && store.winner && !busy" class="overlay">
       <div
         class="comic-panel dialog victory"
         :class="store.winner.id"
         role="dialog"
         aria-modal="true"
       >
-        <p class="comic-title victory-title">Victoire !</p>
+        <p class="comic-title victory-title">{{ humanLost ? 'Défaite…' : 'Victoire !' }}</p>
         <h2 class="dialog-title">{{ store.winner.name }} remporte la partie</h2>
         <div class="dialog-actions">
           <button type="button" class="comic-btn" @click="rematch">Revanche</button>
@@ -371,6 +382,39 @@ function quit() {
 .hint {
   font-size: 0.85rem;
   font-style: italic;
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 48px;
+}
+
+.thinking .comic-caption {
+  font-size: 1.2rem;
+}
+
+.dots span {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  animation: bounce 0.9s ease-in-out infinite;
+}
+
+.dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* --- Log --- */

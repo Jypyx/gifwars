@@ -3,6 +3,11 @@ import type { Synergy } from './synergy'
 
 export type PlayerId = 'player1' | 'player2'
 
+export type AiDifficulty = 'facile' | 'normal' | 'difficile'
+
+/** Who decides a player's actions. */
+export type Controller = { kind: 'human' } | { kind: 'ai'; difficulty: AiDifficulty }
+
 export interface Player {
   id: PlayerId
   name: string

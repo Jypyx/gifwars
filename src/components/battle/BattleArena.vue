@@ -32,7 +32,7 @@ function findGif(gifId: string): { gif: GifCard; side: PlayerId } | undefined {
 function enqueue(job: () => Promise<unknown>, reportBusy = true) {
   if (reportBusy) {
     pending += 1
-    emit('busy', true)
+    if (pending === 1) emit('busy', true)
   }
   queue = queue
     .then(job)
@@ -40,7 +40,8 @@ function enqueue(job: () => Promise<unknown>, reportBusy = true) {
     .finally(() => {
       if (!reportBusy) return
       pending -= 1
-      if (pending === 0) emit('busy', false)
+      // A remounted arena (new match) reports for itself.
+      if (pending === 0 && !unmounted) emit('busy', false)
     })
 }
 

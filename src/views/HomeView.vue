@@ -1,24 +1,34 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import GifCardView from '@/components/GifCard.vue'
+import { AI_DIFFICULTIES, AI_PLAYER_NAME } from '@/config/ai'
 import { TEAM_SIZE, TURN_DURATION_SECONDS } from '@/config/gameRules'
 import { STATUS_INFO } from '@/config/statusInfo'
 import { GIFS_DATA } from '@/data/gifsData'
 import { SYNERGIES } from '@/data/synergies'
 import { useGameStore } from '@/stores/game'
+import type { AiDifficulty } from '@/types'
 
 const store = useGameStore()
 const router = useRouter()
 
 const names = reactive({ player1: '', player2: '' })
+const mode = ref<'ai' | 'local'>('ai')
+const difficulty = ref<AiDifficulty>('normal')
+const difficulties = Object.entries(AI_DIFFICULTIES) as [
+  AiDifficulty,
+  (typeof AI_DIFFICULTIES)[AiDifficulty],
+][]
 
 function startQuickMatch() {
+  const vsAi = mode.value === 'ai'
   store.startQuickMatch({
     playerNames: {
       player1: names.player1.trim() || 'Joueur 1',
-      player2: names.player2.trim() || 'Joueur 2',
+      player2: vsAi ? AI_PLAYER_NAME : names.player2.trim() || 'Joueur 2',
     },
+    controllers: vsAi ? { player2: { kind: 'ai', difficulty: difficulty.value } } : {},
   })
   void router.push({ name: 'battle' })
 }
@@ -38,17 +48,61 @@ const gifName = (id: string) => GIFS_DATA.find((g) => g.id === id)?.name ?? id
       <p>
         {{ TEAM_SIZE }} GIFs tirés au sort par joueur : 2 Communs, 2 Rares, 1 Épique ou Légendaire.
       </p>
-      <form class="players" @submit.prevent="startQuickMatch">
-        <label class="field player1">
-          <span>Joueur 1</span>
-          <input v-model="names.player1" maxlength="16" placeholder="Joueur 1" autocomplete="off" />
-        </label>
-        <span class="vs" aria-hidden="true">VS</span>
-        <label class="field player2">
-          <span>Joueur 2</span>
-          <input v-model="names.player2" maxlength="16" placeholder="Joueur 2" autocomplete="off" />
-        </label>
-        <button type="submit" class="comic-btn go">Combattre !</button>
+      <form class="setup" @submit.prevent="startQuickMatch">
+        <fieldset class="choices">
+          <legend class="choices-legend">Mode</legend>
+          <label class="choice">
+            <input v-model="mode" type="radio" name="mode" value="ai" />
+            <span>Contre l’ordi</span>
+          </label>
+          <label class="choice">
+            <input v-model="mode" type="radio" name="mode" value="local" />
+            <span>À deux (même écran)</span>
+          </label>
+        </fieldset>
+
+        <fieldset v-if="mode === 'ai'" class="choices">
+          <legend class="choices-legend">Difficulté</legend>
+          <label
+            v-for="[key, info] in difficulties"
+            :key="key"
+            class="choice"
+            :title="info.description"
+          >
+            <input v-model="difficulty" type="radio" name="difficulty" :value="key" />
+            <span>{{ info.label }}</span>
+          </label>
+          <p class="choice-hint">{{ AI_DIFFICULTIES[difficulty].description }}</p>
+        </fieldset>
+
+        <div class="players">
+          <label class="field player1">
+            <span>Joueur 1</span>
+            <input
+              v-model="names.player1"
+              maxlength="16"
+              placeholder="Joueur 1"
+              autocomplete="off"
+            />
+          </label>
+          <span class="vs" aria-hidden="true">VS</span>
+          <div v-if="mode === 'ai'" class="field player2">
+            <span>Adversaire</span>
+            <strong class="bot"
+              >{{ AI_PLAYER_NAME }} · {{ AI_DIFFICULTIES[difficulty].label }}</strong
+            >
+          </div>
+          <label v-else class="field player2">
+            <span>Joueur 2</span>
+            <input
+              v-model="names.player2"
+              maxlength="16"
+              placeholder="Joueur 2"
+              autocomplete="off"
+            />
+          </label>
+          <button type="submit" class="comic-btn go">Combattre !</button>
+        </div>
       </form>
     </section>
 
@@ -136,6 +190,81 @@ const gifName = (id: string) => GIFS_DATA.find((g) => g.id === id)?.name ?? id
 
 .start {
   border-top: 10px solid var(--pop-red);
+}
+
+.setup {
+  display: grid;
+  gap: 1rem;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: 0;
+}
+
+.choices-legend {
+  float: left;
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.choice {
+  position: relative;
+  cursor: pointer;
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.3rem 0.9rem;
+  background: #fff;
+  border: var(--ink-width) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.choice input:checked + span {
+  background: var(--pop-yellow);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.choice input:focus-visible + span {
+  outline: 3px solid var(--pop-blue);
+  outline-offset: 3px;
+}
+
+.choice-hint {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.bot {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.4rem 0.6rem;
+  background: #e3f2fd;
+  border: var(--ink-width) solid var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: normal;
 }
 
 .players {
