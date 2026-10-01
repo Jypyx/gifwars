@@ -1,0 +1,32 @@
+:root {
+  --ink: #111;
+  --paper: #fffbea;
+  --pop-yellow: #ffe81f;
+  --pop-red: #e53935;
+  --pop-blue: #1e88e5;
+  --ink-width: 3px;
+  --font-display: 'Bangers', 'Impact', sans-serif;
+  --font-body: 'Comic Neue', 'Comic Sans MS', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--paper);
+  background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
+  background-size: 8px 8px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
