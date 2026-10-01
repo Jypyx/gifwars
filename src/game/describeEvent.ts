@@ -2,8 +2,11 @@ import { STATUS_INFO } from '@/config/statusInfo'
 import { SYNERGIES } from '@/data/synergies'
 import type { BattleLogEntry, GifCard, Player, PlayerId } from '@/types'
 
-/** Builds a function turning battle log entries into French captions for the given players. */
-export function createEventDescriber(players: Record<PlayerId, Player>) {
+/**
+ * Builds a function turning battle log entries into French captions for the given players.
+ * `you`: the human's side, addressed as « tu » (e.g. "Tu remportes la partie !").
+ */
+export function createEventDescriber(players: Record<PlayerId, Player>, you?: PlayerId) {
   const gifs = new Map<string, GifCard>(
     [...players.player1.team, ...players.player2.team].map((gif) => [gif.id, gif]),
   )
@@ -38,7 +41,9 @@ export function createEventDescriber(players: Record<PlayerId, Player>) {
         return `${synergy?.name ?? 'Synergie'} : ${gifName(event.gifId)} récupère ${event.amount} PV.`
       }
       case 'victory':
-        return `${players[event.winnerId].name} remporte la partie !`
+        return event.winnerId === you
+          ? 'Tu remportes la partie !'
+          : `${players[event.winnerId].name} remporte la partie !`
     }
   }
 }

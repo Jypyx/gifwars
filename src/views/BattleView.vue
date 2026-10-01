@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { SoundName } from '@/audio/sfx'
 import AttackPopover from '@/components/battle/AttackPopover.vue'
@@ -14,7 +14,7 @@ import { TURN_DURATION_SECONDS } from '@/config/gameRules'
 import { createEventDescriber } from '@/game/describeEvent'
 import { useAudioStore } from '@/stores/audio'
 import { useGameStore } from '@/stores/game'
-import type { BattleLogEntry } from '@/types'
+import type { BattleLogEntry, GifCard } from '@/types'
 import { isKnockedOut } from '@/utils/gifs'
 
 const store = useGameStore()
@@ -54,10 +54,75 @@ watch(canAct, (can) => {
   }
 })
 
+// --- HP shown in sync with the arena -----------------------------------------
+
+/**
+ * The engine applies damage as soon as an action is played, but the hit lands visually a few
+ * hundred ms later. HP shown in the HUD follow the arena's impacts, then resync with the real
+ * state once animations are over.
+ */
+const shownHp = reactive<Record<string, number>>({})
+
+function resyncHp() {
+  for (const player of Object.values(state.value.players)) {
+    for (const gif of player.team) shownHp[gif.id] = gif.currentHp
+  }
+}
+
+function onImpact({ event }: BattleLogEntry) {
+  const add = (gifId: string, delta: number) => {
+    shownHp[gifId] = Math.max(0, (shownHp[gifId] ?? 0) + delta)
+  }
+  if (event.kind === 'attack') add(event.targetId, -event.damage)
+  else if (event.kind === 'miss') add(event.attackerId, -event.selfDamage)
+  else if (event.kind === 'statusTick') add(event.targetId, -event.damage)
+  else if (event.kind === 'synergyHeal') add(event.gifId, event.amount)
+}
+
+const hpOf = (gif: GifCard) => shownHp[gif.id] ?? gif.currentHp
+
+watch(busy, (isBusy) => !isBusy && resyncHp())
+watch(() => store.matchId, resyncHp, { immediate: true })
+
+// --- "À TOI !" banner -------------------------------------------------------
+
+const turnBanner = ref(false)
+/** The arena has finished its intro for the current match. */
+const arenaReady = ref(false)
+let bannerTurn = -1
+let bannerTimer: ReturnType<typeof setTimeout> | null = null
+
+function onArenaBusy(isBusy: boolean) {
+  store.setPresentationBusy(isBusy)
+  if (!isBusy) arenaReady.value = true
+}
+
+watch(
+  () => store.matchId,
+  () => {
+    arenaReady.value = false
+    bannerTurn = -1
+  },
+)
+
+// Once per turn, when the human can act; it disappears as soon as they do.
+watch([canAct, arenaReady], ([can, ready]) => {
+  if (!can) {
+    turnBanner.value = false
+    return
+  }
+  if (!ready || bannerTurn === state.value.turnNumber) return
+  bannerTurn = state.value.turnNumber
+  turnBanner.value = true
+  audio.play('whoosh')
+  if (bannerTimer) clearTimeout(bannerTimer)
+  bannerTimer = setTimeout(() => (turnBanner.value = false), 900)
+})
+
 // --- Dialog box -------------------------------------------------------------
 
 const playingEntry = ref<BattleLogEntry | null>(null)
-const describe = computed(() => createEventDescriber(state.value.players))
+const describe = computed(() => createEventDescriber(state.value.players, HUMAN))
 const caption = computed(() => {
   if (busy.value && playingEntry.value) return describe.value(playingEntry.value)
   if (state.value.phase === 'finished') return ''
@@ -133,6 +198,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (bannerTimer) clearTimeout(bannerTimer)
   audio.stopMusic()
   store.reset()
 })
@@ -146,9 +212,10 @@ onBeforeUnmount(() => {
         class="arena"
         :players="state.players"
         :log="state.log"
-        @busy="store.setPresentationBusy($event)"
+        @busy="onArenaBusy"
         @cue="onCue"
         @playing="playingEntry = $event"
+        @impact="onImpact"
       />
 
       <div class="hud">
@@ -159,6 +226,7 @@ onBeforeUnmount(() => {
             :player="state.players[ENEMY]"
             :gif="store.activeGifs[ENEMY]"
             :synergies="store.activeSynergies[ENEMY]"
+            :hp-of="hpOf"
             :current="state.currentPlayerId === ENEMY && state.phase === 'battle'"
           />
           <div class="system-buttons">
@@ -186,6 +254,7 @@ onBeforeUnmount(() => {
           :player="human"
           :gif="humanGif"
           :synergies="store.activeSynergies[HUMAN]"
+          :hp-of="hpOf"
           :current="store.isHumanTurn"
         />
 
@@ -245,6 +314,12 @@ onBeforeUnmount(() => {
           </div>
         </footer>
       </div>
+
+      <Transition name="banner">
+        <div v-if="turnBanner" class="turn-banner" aria-hidden="true">
+          <span>À toi !</span>
+        </div>
+      </Transition>
 
       <SwitchModal
         :open="switchOpen || forcedReplacement"
@@ -425,6 +500,53 @@ onBeforeUnmount(() => {
 
 .action-attack {
   grid-area: attack;
+}
+
+/* "À TOI !" strip sweeping across the arena when the human's turn starts */
+.turn-banner {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 46%;
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  padding: 0.3em 0;
+  background: var(--player1);
+  border-block: var(--ink-width) solid var(--ink);
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+
+.turn-banner span {
+  color: var(--pop-yellow);
+  font-family: var(--font-display);
+  font-size: 13cqw;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  -webkit-text-stroke: 0.8cqw var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 1cqw 1cqw 0 var(--ink);
+}
+
+.banner-enter-active {
+  animation: banner-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.banner-leave-active {
+  animation: banner-out 260ms ease-in forwards;
+}
+
+@keyframes banner-in {
+  from {
+    translate: -110% 0;
+  }
+}
+
+@keyframes banner-out {
+  to {
+    translate: 110% 0;
+  }
 }
 
 .secondary {

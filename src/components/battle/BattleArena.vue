@@ -14,6 +14,8 @@ const emit = defineEmits<{
   cue: [sound: SoundName]
   /** The log entry currently being animated. */
   playing: [entry: BattleLogEntry]
+  /** The HP change of this entry visually lands now. */
+  impact: [entry: BattleLogEntry]
 }>()
 
 const host = useTemplateRef<HTMLDivElement>('host')
@@ -34,7 +36,7 @@ function findGif(gifId: string): { gif: GifCard; side: PlayerId } | undefined {
   return undefined
 }
 
-/** `busy` is only reported for event animations, not for the initial GIF loading. */
+/** Each job holds the game (`busy`) while it plays: the intro, then every log entry. */
 function enqueue(job: () => Promise<unknown>, reportBusy = true) {
   if (reportBusy) {
     pending += 1
@@ -66,7 +68,9 @@ onMounted(() => {
     const created = await ArenaRenderer.create(el, {
       reducedMotion,
       findGif,
+      humanSide: 'player1',
       onCue: (sound) => emit('cue', sound),
+      onImpact: (entry) => emit('impact', entry),
       playerColors: {
         player1: color('--player1', '#E53935'),
         player2: color('--player2', '#1E88E5'),
@@ -80,7 +84,9 @@ onMounted(() => {
     resizeObserver.observe(el)
     await Promise.all(initial.map(([side, gif]) => gif && created.setFighter(side, gif)))
     created.preload([...props.players.player1.team, ...props.players.player2.team])
-  }, false)
+    // The intro holds the game (timer and AI wait for it).
+    await created.playIntro()
+  })
 })
 
 watch(

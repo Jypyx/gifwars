@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import HpBar from '@/components/HpBar.vue'
 import { STATUS_INFO } from '@/config/statusInfo'
 import type { GifCard, Player, Rarity, Synergy } from '@/types'
@@ -12,7 +12,23 @@ const props = defineProps<{
   synergies: readonly Synergy[]
   /** Highlights the box while it is this side's turn. */
   current: boolean
+  /** HP to display (follows the arena's impacts); defaults to the real HP. */
+  hpOf?: (gif: GifCard) => number
 }>()
+
+const hp = (gif: GifCard) => props.hpOf?.(gif) ?? gif.currentHp
+const shownHp = computed(() => (props.gif ? hp(props.gif) : 0))
+
+/** Short shake of the box when the active GIF loses HP. */
+const hurt = ref(false)
+let hurtTimer: ReturnType<typeof setTimeout> | null = null
+watch(shownHp, (now, before) => {
+  if (now >= before || props.gif?.id === undefined) return
+  hurt.value = false
+  requestAnimationFrame(() => (hurt.value = true))
+  if (hurtTimer) clearTimeout(hurtTimer)
+  hurtTimer = setTimeout(() => (hurt.value = false), 450)
+})
 
 const STARS: Record<Rarity, number> = { Commun: 1, Rare: 2, Épique: 3, Légendaire: 4 }
 const status = computed(() => (props.gif?.status ? STATUS_INFO[props.gif.status.effect] : null))
@@ -22,14 +38,14 @@ const status = computed(() => (props.gif?.status ? STATUS_INFO[props.gif.status.
   <section
     v-if="gif"
     class="status-box"
-    :class="[side, { current }]"
-    :aria-label="`${side === 'enemy' ? 'Adversaire' : 'Ton GIF'} : ${gif.name}, ${gif.currentHp} PV sur ${gif.maxHp}`"
+    :class="[side, { current, hurt }]"
+    :aria-label="`${side === 'enemy' ? 'Adversaire' : 'Ton GIF'} : ${gif.name}, ${shownHp} PV sur ${gif.maxHp}`"
   >
     <header class="top">
       <h2 class="name">{{ gif.name }}</h2>
       <span class="stars" :title="gif.rarity">{{ '★'.repeat(STARS[gif.rarity]) }}</span>
     </header>
-    <HpBar class="hp" :current="gif.currentHp" :max="gif.maxHp" />
+    <HpBar class="hp" :current="shownHp" :max="gif.maxHp" />
     <div class="meta">
       <ol
         class="pips"
@@ -39,7 +55,7 @@ const status = computed(() => (props.gif?.status ? STATUS_INFO[props.gif.status.
           v-for="(member, index) in player.team"
           :key="member.id"
           class="pip"
-          :class="{ ko: isKnockedOut(member), active: index === player.activeIndex }"
+          :class="{ ko: hp(member) <= 0, active: index === player.activeIndex }"
         />
       </ol>
       <span
@@ -89,6 +105,30 @@ const status = computed(() => (props.gif?.status ? STATUS_INFO[props.gif.status.
   box-shadow:
     0.2em 0.2em 0 var(--ink),
     0 0 0 0.25em color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.hurt {
+  animation: hurt 420ms ease-out;
+}
+
+@keyframes hurt {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  15% {
+    translate: -0.35em 0.1em;
+    background: #ffcdd2;
+  }
+  35% {
+    translate: 0.3em -0.1em;
+  }
+  55% {
+    translate: -0.2em 0;
+  }
+  75% {
+    translate: 0.1em 0;
+  }
 }
 
 .top {
