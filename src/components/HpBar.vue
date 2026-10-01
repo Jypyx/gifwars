@@ -18,6 +18,8 @@ const level = computed(() => (ratio.value > 0.5 ? 'high' : ratio.value > 0.2 ? '
   >
     <span class="hp-label">PV</span>
     <div class="hp-track">
+      <!-- Ghost: what was just lost, emptied after a short delay. -->
+      <div class="hp-ghost" :style="{ width: `${ratio * 100}%` }" />
       <div class="hp-fill" :class="level" :style="{ width: `${ratio * 100}%` }" />
     </div>
     <span class="hp-value">{{ current }}/{{ max }}</span>
@@ -38,6 +40,7 @@ const level = computed(() => (ratio.value > 0.5 ? 'high' : ratio.value > 0.2 ? '
 }
 
 .hp-track {
+  position: relative;
   flex: 1;
   height: 0.75rem;
   background: #fff;
@@ -45,10 +48,21 @@ const level = computed(() => (ratio.value > 0.5 ? 'high' : ratio.value > 0.2 ? '
   overflow: hidden;
 }
 
-.hp-fill {
+.hp-fill,
+.hp-ghost {
+  position: absolute;
+  inset: 0 auto 0 0;
   height: 100%;
+}
+
+.hp-fill {
   border-right: 2px solid var(--ink);
-  transition: width 400ms ease-out;
+  transition: width 220ms ease-out;
+}
+
+.hp-ghost {
+  background: #fff176;
+  transition: width 600ms ease-in 450ms;
 }
 
 .hp-fill.high {

@@ -37,5 +37,8 @@ describe('createEventDescriber', () => {
       text({ kind: 'synergyHeal', synergyId: 'second-breakfast', gifId: 'merry', amount: 1 }),
     ).toBe('Second petit-déjeuner : Merry récupère 1 PV.')
     expect(text({ kind: 'victory', winnerId: 'player1' })).toBe('Alice remporte la partie !')
+    const asYou = createEventDescriber(state.players, 'player1')
+    const victory: BattleEvent = { kind: 'victory', winnerId: 'player1' }
+    expect(asYou({ turn: 9, playerId: 'player1', event: victory })).toBe('Tu remportes la partie !')
   })
 })

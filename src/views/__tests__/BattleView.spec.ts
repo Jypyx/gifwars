@@ -140,6 +140,52 @@ describe('BattleView', () => {
     expect(store.controllers.player2).toEqual({ kind: 'ai', difficulty: 'normal' })
   })
 
+  it('keeps the shown HP until the arena reports the impact', async () => {
+    const { store, wrapper } = await setup()
+    const enemy = store.activeGifs.player2!
+    const shownHp = () => wrapper.find('.enemy-status .hp-value').text()
+    const arena = wrapper.findComponent({ name: 'BattleArena' })
+
+    // The arena starts animating: the engine has already applied the damage.
+    store.setPresentationBusy(true)
+    store.attack(store.activeGifs.player1!.attacks[0].id)
+    await flushPromises()
+    expect(enemy.currentHp).toBeLessThan(enemy.maxHp)
+    expect(shownHp()).toBe(`${enemy.maxHp}/${enemy.maxHp}`)
+
+    const entry = store.state.log.find((e) => e.event.kind === 'attack')!
+    arena.vm.$emit('impact', entry)
+    await flushPromises()
+    expect(shownHp()).toBe(`${enemy.currentHp}/${enemy.maxHp}`)
+
+    store.setPresentationBusy(false)
+    await flushPromises()
+    expect(shownHp()).toBe(`${enemy.currentHp}/${enemy.maxHp}`)
+  })
+
+  it('announces the human turn once the intro is over, then hides it on action', async () => {
+    const { store, wrapper } = await setup()
+    const arena = wrapper.findComponent({ name: 'BattleArena' })
+    expect(wrapper.find('.turn-banner').exists()).toBe(false)
+
+    // Intro plays, then ends.
+    arena.vm.$emit('busy', true)
+    await flushPromises()
+    expect(wrapper.find('.turn-banner').exists()).toBe(false)
+    arena.vm.$emit('busy', false)
+    await flushPromises()
+    expect(wrapper.find('.turn-banner').text()).toBe('À toi !')
+
+    // Acting hides it; it comes back on the next human turn only.
+    store.attack(store.activeGifs.player1!.attacks[0].id)
+    await flushPromises()
+    expect(wrapper.find('.turn-banner').exists()).toBe(false)
+    vi.advanceTimersByTime(2000) // the AI plays, back to the human
+    await flushPromises()
+    expect(store.isHumanTurn).toBe(true)
+    expect(wrapper.find('.turn-banner').exists()).toBe(true)
+  })
+
   describe('sound', () => {
     it('plays arena cues and turns the victory cue into a sad trombone on defeat', async () => {
       const play = vi.spyOn(audioEngine, 'play')

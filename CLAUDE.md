@@ -67,6 +67,11 @@ UI (views/components) ──actions──▶ useGameStore (Pinia) ──▶ game
 - `ArenaRenderer` ne connaît pas les règles : il rejoue chaque `BattleLogEntry` via `play(entry)`. `BattleArena.vue` met les entrées en file et émet `busy` (pause du jeu), `cue` (son) et `playing` (texte de la boîte de dialogue).
 - Disposition portrait (`LAYOUT`) : le joueur en bas à gauche, l'IA en haut à droite. Le centre (`LAYOUT.center.y = 0.42`) doit rester égal à `--burst-center-y` dans `main.css`.
 - Le stage est transparent : le sunburst est une couche CSS (`.world-burst` dans `App.vue`) qui couvre toute la fenêtre.
+- Fichiers : `effects.ts` (étoiles d'onomatopées, chiffres, secousse, flash, onde de choc, lignes de vitesse, bandeau, projectile), `particles.ts`, `statusAuras.ts` (effet persistant d'un statut sur le combattant), `synergyAnimations.ts` (une scène par `Synergy.animationKey`, vérifié par un test), `Fighter.ts` (un GIF encadré et ses gestes).
+- La mise en scène dépend du type d'attaque : `playPhysical`, `playMagic` (charge puis projectile) et `playSpecial` (assombrissement, lignes de vitesse, nom de l'attaque, flash). Les deux couches `scene` (secouée) et `overlay` (flash, bandeau) se superposent.
+- Au montage, `playIntro()` (entrée des combattants puis « FIGHT ! ») passe par la même file que les animations : `busy` est donc vrai pendant l'intro, ce qui met le timer et l'IA en pause.
+- **PV affichés ≠ PV réels pendant une animation** : le moteur applique les dégâts au clic. L'arène émet `impact` au moment visuel du coup ; `BattleView` tient alors des PV « présentés » (`shownHp`), mis à jour depuis les événements (`attack`, `miss`, `statusTick`, `synergyHeal`) et resynchronisés sur l'état réel quand `busy` repasse à faux. Toute nouvelle source de variation de PV doit passer par un événement du journal.
+- L'annonce « À TOI ! » ne s'affiche qu'après l'intro (`arenaReady`), une seule fois par tour (`bannerTurn`), et disparaît dès que le joueur agit.
 - Piège : `container.destroy({ children: true })` passe un argument truthy à `GifSprite.destroy(destroyData)` et détruit la `GifSource` partagée dans le cache `Assets`. `Fighter.destroy()` détache donc le GIF avant.
 - Les animations de l'arène ne sont pas testables dans jsdom : les tests de vue remplacent `BattleArena.vue` par un stub via `vi.mock`.
 
@@ -96,6 +101,7 @@ Les tests unitaires ne couvrent ni PixiJS ni la mise en page. Pour tout changeme
 Pièges rencontrés :
 - La pastille des Vue DevTools (dev uniquement) intercepte les clics sur le HUD du bas. La masquer avec `#__vue-devtools-container__ { display: none !important }`.
 - Les boutons animés en continu (« Jouer », l'attaque spéciale) sont jugés « instables » par Playwright : utiliser `click({ force: true })`.
+- Pour capturer une animation, forcer la situation via le store (par exemple `s.state.log.push({ … event: { kind: 'synergyHeal', … } })` rejoue un événement dans l'arène, ou `startQuickMatch({ rng: () => 0.99 })` suivi de `activeIndex = 4` pour avoir un Épique ou un Légendaire), puis faire des captures à intervalles fixes.
 - `await import('/src/stores/game.ts')` dans la page donne accès au store de l'application. Mais après une modification à chaud (HMR), Vite sert le module avec `?t=…`, et l'import obtient une autre instance : redémarrer le serveur avant ce type de vérification.
 
 ## Déploiement

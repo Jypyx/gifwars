@@ -58,6 +58,47 @@ export const SOUNDS = {
       q: 2,
     })
   },
+  /** Energy gathering before a magic / special attack: rising, trembling sweep. */
+  charge(ctx, out, t) {
+    const osc = ctx.createOscillator()
+    const tremolo = ctx.createOscillator()
+    const depth = ctx.createGain()
+    const gain = ctx.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(180, t)
+    osc.frequency.exponentialRampToValueAtTime(1100, t + 0.5)
+    tremolo.frequency.value = 18
+    depth.gain.value = 0.12
+    gain.gain.setValueAtTime(0.0001, t)
+    gain.gain.linearRampToValueAtTime(0.18, t + 0.4)
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.55)
+    tremolo.connect(depth)
+    depth.connect(gain.gain)
+    osc.connect(gain)
+    gain.connect(out)
+    for (const node of [osc, tremolo]) {
+      node.start(t)
+      node.stop(t + 0.57)
+    }
+    noiseBurst(ctx, out, t, {
+      duration: 0.5,
+      peak: 0.12,
+      attack: 0.4,
+      filter: 'bandpass',
+      from: 800,
+      to: 5000,
+      q: 2,
+    })
+  },
+  /** "FIGHT !": brass-like stab over a crash. */
+  fight(ctx, out, t) {
+    for (const note of [55, 62, 67]) {
+      tone(ctx, out, t, { type: 'sawtooth', from: midiToHz(note), duration: 0.5, peak: 0.13 })
+      tone(ctx, out, t, { type: 'square', from: midiToHz(note + 12), duration: 0.35, peak: 0.05 })
+    }
+    tone(ctx, out, t, { from: 120, to: 45, duration: 0.3, peak: 0.8 })
+    noiseBurst(ctx, out, t, { duration: 0.8, peak: 0.35, filter: 'highpass', from: 3000 })
+  },
   /** Lunge before a hit. */
   whoosh(ctx, out, t) {
     noiseBurst(ctx, out, t, {
