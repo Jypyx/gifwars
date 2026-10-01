@@ -12,10 +12,14 @@ src/
   config/       Règles et constantes d'équilibrage (timer, Quick Match, statuts)
   data/         Mocks : gifsData.ts (catalogue), synergies.ts, universes.ts (thèmes de cartes)
   game/         Moteur de combat (fonctions pures, aléatoire injectable)
+    arena/      Arène PixiJS : rejoue le journal du store en animations BD
   utils/        Fonctions pures (instanciation d'un GIF, détection des synergies)
   stores/       Stores Pinia (useGameStore : partie, tours, timer)
-  views/        Écrans
+  components/   GifCard.vue (carte façon Pokémon) et panneaux de combat
+  views/        Accueil (Quick Match, catalogue) et écran de combat
 ```
+
+Mode actuel : deux joueurs sur le même écran (hot-seat).
 
 ## Commandes
 

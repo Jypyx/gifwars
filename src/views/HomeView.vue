@@ -1,80 +1,234 @@
 <script setup lang="ts">
-// Temporary catalogue preview, replaced by the real menu / GifCard.vue in the next steps.
+import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import GifCardView from '@/components/GifCard.vue'
+import { TEAM_SIZE, TURN_DURATION_SECONDS } from '@/config/gameRules'
+import { STATUS_INFO } from '@/config/statusInfo'
 import { GIFS_DATA } from '@/data/gifsData'
-import { UNIVERSES } from '@/data/universes'
+import { SYNERGIES } from '@/data/synergies'
+import { useGameStore } from '@/stores/game'
+
+const store = useGameStore()
+const router = useRouter()
+
+const names = reactive({ player1: '', player2: '' })
+
+function startQuickMatch() {
+  store.startQuickMatch({
+    playerNames: {
+      player1: names.player1.trim() || 'Joueur 1',
+      player2: names.player2.trim() || 'Joueur 2',
+    },
+  })
+  void router.push({ name: 'battle' })
+}
+
+const gifName = (id: string) => GIFS_DATA.find((g) => g.id === id)?.name ?? id
 </script>
 
 <template>
   <main class="home">
-    <h1 class="title">GifWars</h1>
-    <ul class="catalogue">
-      <li
-        v-for="gif in GIFS_DATA"
-        :key="gif.id"
-        class="panel"
-        :style="{ '--frame': UNIVERSES[gif.universe].primary }"
-      >
-        <img :src="gif.gifUrl" :alt="gif.name" loading="lazy" />
-        <strong>{{ gif.name }}</strong>
-        <span>{{ gif.rarity }} · {{ UNIVERSES[gif.universe].name }} · {{ gif.maxHp }} PV</span>
-      </li>
-    </ul>
+    <header class="hero">
+      <h1 class="comic-title logo">GifWars</h1>
+      <p class="comic-caption tagline">Le choc des GIFs de la Pop Culture</p>
+    </header>
+
+    <section class="comic-panel start" aria-labelledby="start-title">
+      <h2 id="start-title" class="section-title">Quick Match</h2>
+      <p>
+        {{ TEAM_SIZE }} GIFs tirés au sort par joueur : 2 Communs, 2 Rares, 1 Épique ou Légendaire.
+      </p>
+      <form class="players" @submit.prevent="startQuickMatch">
+        <label class="field player1">
+          <span>Joueur 1</span>
+          <input v-model="names.player1" maxlength="16" placeholder="Joueur 1" autocomplete="off" />
+        </label>
+        <span class="vs" aria-hidden="true">VS</span>
+        <label class="field player2">
+          <span>Joueur 2</span>
+          <input v-model="names.player2" maxlength="16" placeholder="Joueur 2" autocomplete="off" />
+        </label>
+        <button type="submit" class="comic-btn go">Combattre !</button>
+      </form>
+    </section>
+
+    <section class="comic-panel rules" aria-labelledby="rules-title">
+      <h2 id="rules-title" class="section-title">Les règles</h2>
+      <ul>
+        <li>
+          Chaque tour : <strong>Attaquer</strong> ou faire un <strong>Switch</strong> (le Switch
+          consomme le tour).
+        </li>
+        <li>
+          {{ TURN_DURATION_SECONDS }} secondes par tour, sinon l’attaque physique part toute seule.
+        </li>
+        <li>Un GIF K.O. doit être remplacé, sans perdre ton tour.</li>
+        <li v-for="(info, key) in STATUS_INFO" :key="key">
+          <strong :style="{ color: info.color }">{{ info.label }}</strong> : {{ info.description }}
+        </li>
+        <li>Mets K.O. les {{ TEAM_SIZE }} GIFs adverses pour gagner !</li>
+      </ul>
+    </section>
+
+    <section class="catalogue-section" aria-labelledby="catalogue-title">
+      <h2 id="catalogue-title" class="section-title banner-title">Le catalogue</h2>
+      <ul class="catalogue">
+        <li v-for="gif in GIFS_DATA" :key="gif.id">
+          <GifCardView :gif="gif" />
+        </li>
+      </ul>
+    </section>
+
+    <section class="comic-panel synergies" aria-labelledby="synergies-title">
+      <h2 id="synergies-title" class="section-title">Synergies</h2>
+      <ul>
+        <li v-for="synergy in SYNERGIES" :key="synergy.id">
+          <strong>{{ synergy.name }}</strong>
+          <span class="members">{{ synergy.gifIds.map(gifName).join(' + ') }}</span>
+          <span>{{ synergy.description }}</span>
+        </li>
+      </ul>
+    </section>
   </main>
 </template>
 
 <style scoped>
 .home {
-  padding: 1rem;
+  display: grid;
+  gap: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 1rem var(--gutter) 3rem;
 }
 
-.title {
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 12vw, 6rem);
-  letter-spacing: 0.05em;
-  text-align: center;
-  color: var(--pop-yellow);
-  -webkit-text-stroke: var(--ink-width) var(--ink);
-  text-shadow: 6px 6px 0 var(--ink);
+.hero {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.logo {
+  font-size: clamp(3.5rem, 16vw, 7rem);
+  line-height: 1;
   transform: rotate(-3deg);
-  margin-bottom: 1.5rem;
+}
+
+.tagline {
+  font-size: clamp(0.9rem, 3.5vw, 1.2rem);
+  transform: rotate(1.5deg);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: normal;
+  letter-spacing: 0.05em;
+}
+
+.start,
+.rules,
+.synergies {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.start {
+  border-top: 10px solid var(--pop-red);
+}
+
+.players {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.field.player1 span {
+  color: var(--player1);
+}
+
+.field.player2 span {
+  color: var(--player2);
+}
+
+.field input {
+  min-height: 48px;
+  padding: 0.4rem 0.6rem;
+  border: var(--ink-width) solid var(--ink);
+  font: inherit;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.vs {
+  justify-self: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--pop-red);
+  -webkit-text-stroke: 1.5px var(--ink);
+}
+
+.go {
+  font-size: 1.6rem;
+}
+
+.rules ul,
+.synergies ul {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.2rem;
+}
+
+.banner-title {
+  justify-self: start;
+  padding: 0.1rem 0.75rem;
+  background: var(--pop-yellow);
+  border: var(--ink-width) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(-1.5deg);
+}
+
+.catalogue-section {
+  display: grid;
+  gap: 1rem;
 }
 
 .catalogue {
   list-style: none;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
 }
 
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background: #fff;
-  border: var(--ink-width) solid var(--ink);
-  outline: 6px solid var(--frame);
-  outline-offset: -9px;
-  box-shadow: 5px 5px 0 var(--ink);
+.synergies li {
+  display: grid;
 }
 
-.panel img {
-  aspect-ratio: 4 / 3;
-  width: 100%;
-  object-fit: cover;
-  border: 2px solid var(--ink);
+.members {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--pop-blue);
 }
 
-.panel strong {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  letter-spacing: 0.03em;
-}
+@media (min-width: 720px) {
+  .players {
+    grid-template-columns: 1fr auto 1fr auto;
+  }
 
-.panel span {
-  font-size: 0.8rem;
+  .vs {
+    align-self: center;
+    padding-top: 1.2rem;
+  }
 }
 </style>

@@ -19,6 +19,8 @@ const TICK_MS = 1000
 
 export const useGameStore = defineStore('game', () => {
   const state = ref<GameState>(createIdleState())
+  /** Incremented on every new match, lets views remount per-match components (e.g. the arena). */
+  const matchId = ref(0)
   let rng: Rng = Math.random
   let timerId: ReturnType<typeof setInterval> | null = null
 
@@ -77,6 +79,7 @@ export const useGameStore = defineStore('game', () => {
     stopTimer()
     rng = options.rng ?? Math.random
     state.value = createQuickMatchState(rng, options)
+    matchId.value += 1
     syncTimer()
   }
 
@@ -101,6 +104,7 @@ export const useGameStore = defineStore('game', () => {
 
   return {
     state,
+    matchId,
     isPlaying,
     currentPlayer,
     opponent,

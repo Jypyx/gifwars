@@ -9,6 +9,12 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      path: '/combat',
+      name: 'battle',
+      // Lazy-loaded: keeps PixiJS out of the home page bundle.
+      component: () => import('../views/BattleView.vue'),
+    },
   ],
 })
 

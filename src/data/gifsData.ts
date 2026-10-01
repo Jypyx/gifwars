@@ -92,7 +92,7 @@ export const GIFS_DATA: readonly GifCard[] = [
     name: 'Gandalf',
     universe: 'lotr',
     rarity: 'Légendaire',
-    gifUrl: giphyUrl('jqDU6oXajm0RsoxhdB'),
+    gifUrl: giphyUrl('njYrp176NQsHS'),
     catchphrase: 'Un magicien n’est jamais en retard.',
     maxHp: 130,
     attacks: [
@@ -132,7 +132,7 @@ export const GIFS_DATA: readonly GifCard[] = [
     name: 'Michael Scott',
     universe: 'the-office',
     rarity: 'Épique',
-    gifUrl: giphyUrl('vZXpOtHPCqLyT5vqfF'),
+    gifUrl: giphyUrl('cXblnKXr2BQOaYnTni'),
     catchphrase: 'Je ne suis pas superstitieux, mais je suis un peu stitieux.',
     maxHp: 105,
     attacks: [
@@ -148,7 +148,7 @@ export const GIFS_DATA: readonly GifCard[] = [
     name: 'Ron Weasley',
     universe: 'harry-potter',
     rarity: 'Commun',
-    gifUrl: giphyUrl('YOT5J1vwwSoCCAEOE0'),
+    gifUrl: giphyUrl('55d4cDB5zXccQlA8Ig'),
     catchphrase: 'Pourquoi des araignées ? Pourquoi pas des papillons ?',
     maxHp: 60,
     attacks: [physical('ron-broken-wand', 'Baguette scotchée', 14)],
