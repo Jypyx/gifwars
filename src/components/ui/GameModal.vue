@@ -98,7 +98,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .backdrop {
-  position: absolute;
+  /* Fixed: dims the whole window, including the sunburst on both sides of the frame. */
+  position: fixed;
   inset: 0;
   background: rgb(10 10 30 / 0.6);
 }

@@ -1,4 +1,8 @@
 :root {
+  --burst-dark: #ffd000;
+  --burst-light: #ffe81f;
+  /* Vertical position of the sunburst center, shared by the CSS backdrop and the arena. */
+  --burst-center-y: 42%;
   --ink: #111;
   --paper: #fffbea;
   --pop-yellow: #ffe81f;
@@ -32,9 +36,7 @@ body,
 body {
   display: grid;
   place-items: center;
-  background-color: #1b1b3a;
-  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1.5px, transparent 1.5px);
-  background-size: 14px 14px;
+  background: var(--burst-dark);
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
@@ -63,6 +65,7 @@ button {
  */
 .game-frame {
   position: relative;
+  z-index: 1;
   width: min(100vw, calc(100vh * 9 / 16));
   width: min(100vw, calc(100dvh * 9 / 16));
   height: 100vh;
@@ -71,9 +74,52 @@ button {
   overflow: hidden;
   overflow: clip;
   container-type: size;
-  background: var(--paper);
   user-select: none;
   touch-action: manipulation;
+}
+
+/**
+ * Sunburst covering the whole window, whatever its width. The frame is centered and full
+ * height, so the rays' center lines up with the frame's own center at any resolution.
+ */
+.world-burst {
+  position: fixed;
+  left: 50%;
+  top: var(--burst-center-y);
+  z-index: 0;
+  width: 170vmax;
+  height: 170vmax;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(
+    var(--burst-light) 0deg 7.5deg,
+    var(--burst-dark) 7.5deg 15deg
+  );
+  pointer-events: none;
+}
+
+/* Halftone dots fading in towards the edges, for a printed look. */
+.world-burst::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(rgb(229 57 53 / 0.25) 22%, transparent 24%) 0 0 / 1.4vmin 1.4vmin;
+  mask-image: radial-gradient(circle, transparent 10%, #000 32%);
+}
+
+.world-burst.spinning {
+  animation: world-spin 60s linear infinite;
+}
+
+@keyframes world-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-burst.spinning {
+    animation: none;
+  }
 }
 
 /**

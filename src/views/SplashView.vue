@@ -36,8 +36,6 @@ function start(difficulty: AiDifficulty) {
 
 <template>
   <main class="screen splash">
-    <div class="sunburst" aria-hidden="true" />
-
     <header class="title-block">
       <h1 class="comic-title logo">GifWars</h1>
       <figure class="bubble">
@@ -86,33 +84,6 @@ function start(difficulty: AiDifficulty) {
   flex-direction: column;
   justify-content: space-between;
   padding: calc(8cqh + env(safe-area-inset-top)) 7cqw calc(6cqh + env(safe-area-inset-bottom));
-  background: #ffd000;
-}
-
-/* Slowly spinning comic sunburst */
-.sunburst {
-  position: absolute;
-  left: 50%;
-  top: 38%;
-  width: 260cqh;
-  height: 260cqh;
-  translate: -50% -50%;
-  background: repeating-conic-gradient(#ffe81f 0deg 7.5deg, #ffd000 7.5deg 15deg);
-  animation: spin 60s linear infinite;
-}
-
-.sunburst::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(rgb(229 57 53 / 0.25) 22%, transparent 24%) 0 0 / 1.6cqh 1.6cqh;
-  mask-image: radial-gradient(circle, transparent 8%, #000 30%);
-}
-
-@keyframes spin {
-  to {
-    rotate: 1turn;
-  }
 }
 
 .title-block {

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { useAudioStore } from '@/stores/audio'
 
 const audio = useAudioStore()
+const route = useRoute()
 
 /** Browsers only allow audio after a user gesture: unlock on the first interaction. */
 const unlock = () => audio.unlock()
@@ -30,6 +31,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <!-- Comic sunburst behind the whole window, centered on the game frame. -->
+  <div class="world-burst" :class="{ spinning: route.name === 'home' }" aria-hidden="true" />
   <div class="game-frame">
     <RouterView v-slot="{ Component }">
       <Transition name="screen">

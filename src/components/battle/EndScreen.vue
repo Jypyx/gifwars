@@ -37,19 +37,25 @@ defineEmits<{ retry: []; quit: [] }>()
   grid-template-rows: 1fr auto auto 1fr auto;
   justify-items: center;
   padding: 0 7cqw calc(7cqh + env(safe-area-inset-bottom));
-  /* Heavy blur: the battle stays faintly visible underneath. */
+}
+
+/* Heavy blur over the whole window: the battle stays faintly visible underneath. */
+.end-screen::before {
+  content: '';
+  position: fixed;
+  inset: 0;
   backdrop-filter: blur(10px) saturate(1.2);
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
   background: rgb(255 214 0 / 0.25);
-  overflow: hidden;
 }
 
-.defeat {
+.defeat::before {
   background: rgb(20 20 50 / 0.45);
 }
 
+/* Fixed like the blur layer, so the rays are not cut at the edges of the frame. */
 .burst {
-  position: absolute;
+  position: fixed;
   left: 50%;
   top: 38%;
   width: 200cqh;

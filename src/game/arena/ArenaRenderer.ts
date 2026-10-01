@@ -2,13 +2,13 @@
  * PixiJS battle arena. It does not know the rules: it only replays `BattleLogEntry`s
  * coming from the store as comic-style animations.
  */
-import { Application, Assets, Container, Graphics, type Text, type Ticker } from 'pixi.js'
+import { Application, Assets, Container, type Text, type Ticker } from 'pixi.js'
 import 'pixi.js/gif'
 import type { SoundName } from '@/audio/sfx'
 import { STATUS_INFO } from '@/config/statusInfo'
 import { SYNERGIES } from '@/data/synergies'
 import type { AttackType, BattleLogEntry, GifCard, PlayerId } from '@/types'
-import { createVsLabel, drawBackground, floatText, popBurst } from './effects'
+import { createVsLabel, floatText, popBurst } from './effects'
 import { Fighter } from './Fighter'
 import { wait } from './tween'
 
@@ -36,12 +36,12 @@ const SIDES: readonly PlayerId[] = ['player1', 'player2']
 const LAYOUT = {
   player1: { x: 0.3, y: 0.57 },
   player2: { x: 0.68, y: 0.31 },
-  center: { x: 0.5, y: 0.44 },
+  /** Matches `--burst-center-y`: the VS sits right on the backdrop's sunburst center. */
+  center: { x: 0.5, y: 0.42 },
   fighterWidth: (width: number, height: number) => Math.min(width * 0.48, height * 0.3 * (4 / 3)),
 }
 
 export class ArenaRenderer {
-  private readonly background = new Graphics()
   private readonly vs: Text = createVsLabel()
   private readonly fighterLayer = new Container()
   private readonly fx = new Container()
@@ -61,7 +61,8 @@ export class ArenaRenderer {
     private readonly options: ArenaOptions,
   ) {
     this.fighterLayer.addChild(this.fighters.player1.root, this.fighters.player2.root)
-    app.stage.addChild(this.background, this.fighterLayer, this.vs, this.fx)
+    // Transparent stage: the sunburst behind the whole window shows through.
+    app.stage.addChild(this.fighterLayer, this.vs, this.fx)
     if (!options.reducedMotion) app.ticker.add(this.bob)
   }
 
@@ -105,7 +106,6 @@ export class ArenaRenderer {
     this.height = height
     this.app.renderer.resize(width, height)
     const center = { x: width * LAYOUT.center.x, y: height * LAYOUT.center.y }
-    drawBackground(this.background, width, height, center)
     this.vs.position.set(center.x, center.y)
     this.vs.scale.set(Math.max(0.5, Math.min(1, width / 500)))
 

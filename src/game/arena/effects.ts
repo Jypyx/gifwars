@@ -107,43 +107,6 @@ export async function floatText(
   label.destroy()
 }
 
-/** Alternating-ray sunburst background with a "VS" in the middle. */
-export function drawBackground(
-  g: Graphics,
-  width: number,
-  height: number,
-  center = { x: width / 2, y: height / 2 },
-): void {
-  g.clear()
-  g.rect(0, 0, width, height).fill('#FFD000')
-
-  const { x: cx, y: cy } = center
-  const radius = Math.hypot(width, height)
-  const rays = 28
-  for (let i = 0; i < rays; i += 2) {
-    const a1 = (i / rays) * Math.PI * 2
-    const a2 = ((i + 1) / rays) * Math.PI * 2
-    g.poly([
-      cx,
-      cy,
-      cx + Math.cos(a1) * radius,
-      cy + Math.sin(a1) * radius,
-      cx + Math.cos(a2) * radius,
-      cy + Math.sin(a2) * radius,
-    ]).fill('#FFE81F')
-  }
-
-  // Halftone dots in the corners for a printed look.
-  const step = 12
-  for (let x = 0; x < width; x += step) {
-    for (let y = 0; y < height; y += step) {
-      const d = Math.min(Math.hypot(x, y), Math.hypot(width - x, height - y)) / Math.hypot(cx, cy)
-      const r = Math.max(0, 3.2 - d * 5)
-      if (r > 0.4) g.circle(x, y, r).fill({ color: '#E53935', alpha: 0.35 })
-    }
-  }
-}
-
 export function createVsLabel(): Text {
   const vs = new Text({
     text: 'VS',
