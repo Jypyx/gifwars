@@ -11,8 +11,9 @@ src/
   types/        Types du jeu (GifCard, Attack, Synergy, état de partie…)
   config/       Règles et constantes d'équilibrage (timer, Quick Match, statuts)
   data/         Mocks : gifsData.ts (catalogue), synergies.ts, universes.ts (thèmes de cartes)
+  game/         Moteur de combat (fonctions pures, aléatoire injectable)
   utils/        Fonctions pures (instanciation d'un GIF, détection des synergies)
-  stores/       Stores Pinia (useGameStore — étape suivante)
+  stores/       Stores Pinia (useGameStore : partie, tours, timer)
   views/        Écrans
 ```
 

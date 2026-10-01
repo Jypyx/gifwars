@@ -12,8 +12,8 @@ export interface Player {
 }
 
 /**
- * - `awaitingReplacement`: the active GIF of `pendingReplacementFor` is K.O. and must be replaced
- *   (does not consume that player's next attack turn).
+ * - `awaitingReplacement`: the active GIF of each player in `pendingReplacements` is K.O. and must
+ *   be replaced (does not consume that player's next attack turn).
  */
 export type GamePhase = 'idle' | 'battle' | 'awaitingReplacement' | 'finished'
 
@@ -26,10 +26,14 @@ export type BattleEvent =
   | { kind: 'miss'; attackerId: string; attackId: string; selfDamage: number }
   | { kind: 'statusApplied'; targetId: string; effect: StatusEffectKind }
   | { kind: 'statusTick'; targetId: string; effect: StatusEffectKind; damage: number }
-  | { kind: 'turnSkipped'; gifId: string; reason: 'Lag' | 'timeout' }
+  | { kind: 'statusExpired'; targetId: string; effect: StatusEffectKind }
+  | { kind: 'turnSkipped'; gifId: string; reason: 'Lag' }
+  | { kind: 'timeout'; gifId: string }
   | { kind: 'switch'; fromId: string; toId: string }
+  | { kind: 'replacement'; gifId: string }
   | { kind: 'ko'; gifId: string }
   | { kind: 'synergyHeal'; synergyId: Synergy['id']; gifId: string; amount: number }
+  | { kind: 'victory'; winnerId: PlayerId }
 
 export interface BattleLogEntry {
   turn: number
@@ -44,9 +48,10 @@ export interface GameState {
   players: Record<PlayerId, Player>
   currentPlayerId: PlayerId
   turnNumber: number
-  /** Seconds left before the automatic physical attack. */
+  /** Seconds left before the automatic action (physical attack or replacement). */
   turnTimeLeft: number
-  pendingReplacementFor: PlayerId | null
+  /** Players who must send a replacement before the battle resumes. */
+  pendingReplacements: PlayerId[]
   winnerId: PlayerId | null
   log: BattleLogEntry[]
 }
