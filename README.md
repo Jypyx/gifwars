@@ -35,3 +35,16 @@ pnpm type-check   # vue-tsc
 pnpm lint         # oxlint + eslint
 pnpm build        # type-check + build de prod
 ```
+
+## Déploiement
+
+Le jeu est publié sur GitHub Pages : https://jypyx.github.io/gifwars/
+
+Le workflow [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) vérifie le projet (lint, tests, type-check, build), puis :
+
+- à chaque push sur `main`, il déploie sur Pages ;
+- sur une pull request, il vérifie seulement, sans déployer ;
+- on peut aussi le relancer à la main : **Actions → Deploy GitHub Pages → Run workflow**.
+
+Le site est servi sous `/gifwars/` : le build lit ce chemin dans `GIFWARS_BASE_PATH` (`/` par défaut en local). `404.html` est une copie de `index.html`, pour que les liens profonds (`/gifwars/combat`) chargent l'application.
+

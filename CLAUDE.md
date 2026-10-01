@@ -98,6 +98,13 @@ Pièges rencontrés :
 - Les boutons animés en continu (« Jouer », l'attaque spéciale) sont jugés « instables » par Playwright : utiliser `click({ force: true })`.
 - `await import('/src/stores/game.ts')` dans la page donne accès au store de l'application. Mais après une modification à chaud (HMR), Vite sert le module avec `?t=…`, et l'import obtient une autre instance : redémarrer le serveur avant ce type de vérification.
 
+## Déploiement
+
+- Publication sur https://jypyx.github.io/gifwars/ par `.github/workflows/deploy-pages.yml`. Le workflow déploie à chaque push sur `main`, vérifie seulement sur les pull requests, et peut être lancé à la main.
+- L'environnement `github-pages` n'accepte que les branches `main` et `claude-code` : pour publier, il faut fusionner dans `main`.
+- Le site est servi sous `/gifwars/`. `vite.config.ts` lit le chemin de base dans `GIFWARS_BASE_PATH` (`/` par défaut). La CI copie aussi `index.html` en `404.html` pour les liens profonds, car Pages n'a pas de repli vers l'application. Aucun chemin absolu ne doit être écrit en dur : passer par `import.meta.env.BASE_URL`, comme le fait le routeur.
+- Pour tester un build avec ce chemin en local, lancer le build depuis PowerShell. Git Bash convertit `/gifwars/` en chemin Windows, et `MSYS_NO_PATHCONV=1` casse le lanceur de pnpm.
+
 ## GIFs
 
 Les GIFs sont de vraies URLs Giphy (`giphyUrl(id)`, variante légère `200.gif`). Pour en ajouter ou en changer un, vérifier visuellement qu'il montre bien le bon personnage, et pas seulement que l'URL répond 200. Un ancien GIF « Gandalf » montrait en réalité une publicité.

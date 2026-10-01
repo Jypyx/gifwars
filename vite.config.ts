@@ -6,6 +6,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages serves the site under /gifwars/ (set by the deploy workflow); '/' locally.
+  base: process.env.GIFWARS_BASE_PATH ?? '/',
   plugins: [
     vue(),
     vueDevTools(),
