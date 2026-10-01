@@ -4,9 +4,10 @@
  */
 import { Application, Assets, Container, Graphics, type Text, type Ticker } from 'pixi.js'
 import 'pixi.js/gif'
+import type { SoundName } from '@/audio/sfx'
 import { STATUS_INFO } from '@/config/statusInfo'
 import { SYNERGIES } from '@/data/synergies'
-import type { BattleLogEntry, GifCard, PlayerId } from '@/types'
+import type { AttackType, BattleLogEntry, GifCard, PlayerId } from '@/types'
 import { createVsLabel, drawBackground, floatText, popBurst } from './effects'
 import { Fighter } from './Fighter'
 import { wait } from './tween'
@@ -16,6 +17,14 @@ export interface ArenaOptions {
   /** Finds a GIF of the current match and the side it belongs to. */
   findGif: (gifId: string) => { gif: GifCard; side: PlayerId } | undefined
   playerColors: Record<PlayerId, string>
+  /** Called at the exact moment of each animation beat, to keep sounds in sync. */
+  onCue?: (sound: SoundName) => void
+}
+
+const IMPACT_SOUNDS: Record<AttackType, SoundName> = {
+  Physique: 'punch',
+  Magique: 'zap',
+  Spéciale: 'boom',
 }
 
 const SIDES: readonly PlayerId[] = ['player1', 'player2']
@@ -110,12 +119,17 @@ export class ArenaRenderer {
         if (!attacker || !target) return
         const from = this.slot(attacker)
         const to = this.slot(target)
+        const type =
+          this.options.findGif(event.attackerId)?.gif.attacks.find((a) => a.id === event.attackId)
+            ?.type ?? 'Physique'
+        this.cue('whoosh')
         if (motion)
           await this.fighters[attacker].lunge(
             ticker,
             (to.x - from.x) * 0.25,
             (to.y - from.y) * 0.25,
           )
+        this.cue(IMPACT_SOUNDS[type])
         await Promise.all([
           motion ? this.fighters[target].hit(ticker) : Promise.resolve(),
           this.burstAt(target, entry.onomatopoeia ?? 'BAM !'),
@@ -126,6 +140,7 @@ export class ArenaRenderer {
       case 'miss': {
         const side = this.sideOf(event.attackerId)
         if (!side) return
+        this.cue('boing')
         await Promise.all([
           motion ? this.fighters[side].wobble(ticker) : Promise.resolve(),
           this.burstAt(side, entry.onomatopoeia ?? 'OUPS !', { fill: '#B2DFDB' }),
@@ -136,6 +151,7 @@ export class ArenaRenderer {
       case 'turnSkipped': {
         const side = this.sideOf(event.gifId)
         if (!side) return
+        this.cue('glitch')
         await Promise.all([
           this.fighters[side].flicker(ticker),
           this.burstAt(side, entry.onomatopoeia ?? 'BUFFERING…', {
@@ -149,6 +165,7 @@ export class ArenaRenderer {
         const side = this.sideOf(event.targetId)
         if (!side) return
         const info = STATUS_INFO[event.effect]
+        this.cue('status')
         await this.burstAt(side, `${info.label.toUpperCase()} !`, {
           fill: '#FFFFFF',
           textColor: info.color,
@@ -160,6 +177,7 @@ export class ArenaRenderer {
       case 'statusTick': {
         const side = this.sideOf(event.targetId)
         if (!side) return
+        this.cue('drain')
         await Promise.all([
           motion ? this.fighters[side].hit(ticker, 5) : Promise.resolve(),
           this.floatAt(side, `-${event.damage}`, STATUS_INFO[event.effect].color),
@@ -168,6 +186,7 @@ export class ArenaRenderer {
       }
       case 'timeout': {
         const side = this.sideOf(event.gifId)
+        this.cue('buzzer')
         if (side)
           await this.burstAt(side, entry.onomatopoeia ?? 'TIC TAC !', {
             fill: '#FFFFFF',
@@ -192,6 +211,7 @@ export class ArenaRenderer {
       case 'ko': {
         const side = this.sideOf(event.gifId)
         if (!side) return
+        this.cue('ko')
         await Promise.all([
           this.fighters[side].knockOut(ticker, side === 'player1' ? -1 : 1),
           this.burstAt(side, entry.onomatopoeia ?? 'K.O. !', {
@@ -210,6 +230,7 @@ export class ArenaRenderer {
         const jobs = [this.floatAt(side, `+${event.amount}`, '#43A047')]
         if (synergy && !this.shownSynergies.has(key)) {
           this.shownSynergies.add(key)
+          this.cue('heal')
           jobs.push(
             this.burstAt(side, synergy.onomatopoeia, {
               fill: '#C8E6C9',
@@ -224,6 +245,7 @@ export class ArenaRenderer {
       }
       case 'victory': {
         const size = Math.max(40, Math.min(96, this.width * 0.12))
+        this.cue('victory')
         await popBurst(
           this.fx,
           ticker,
@@ -258,6 +280,10 @@ export class ArenaRenderer {
     this.elapsed += ticker.deltaMS / 1000
     this.fighters.player1.setIdleOffset(Math.sin(this.elapsed * 2.2) * 3)
     this.fighters.player2.setIdleOffset(Math.sin(this.elapsed * 2.2 + Math.PI) * 3)
+  }
+
+  private cue(sound: SoundName): void {
+    if (!this.destroyed) this.options.onCue?.(sound)
   }
 
   private sideOf(gifId: string): PlayerId | undefined {
@@ -313,9 +339,11 @@ export class ArenaRenderer {
     const fighter = this.fighters[side]
     const offscreen = side === 'player1' ? -this.width * 0.4 : this.width * 0.4
     const motion = !this.options.reducedMotion
+    if (slideOut) this.cue('switch')
     if (slideOut && motion) await fighter.slideOut(this.ticker, offscreen)
     await fighter.setGif(gif)
     if (!motion) fighter.resetPose()
+    this.cue('enter')
     await Promise.all([
       motion ? fighter.slideIn(this.ticker, offscreen) : Promise.resolve(),
       this.burstAt(side, text, {

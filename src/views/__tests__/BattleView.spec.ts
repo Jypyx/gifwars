@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { audioEngine } from '@/audio/AudioEngine'
 import { useGameStore } from '@/stores/game'
 import BattleView from '@/views/BattleView.vue'
 
@@ -88,5 +89,43 @@ describe('BattleView', () => {
     store.state.winnerId = 'player2'
     await flushPromises()
     expect(wrapper.find('.victory-title').text()).toBe('Défaite…')
+  })
+
+  describe('sound', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it('plays arena cues and starts the music', async () => {
+      const startMusic = vi.spyOn(audioEngine, 'startMusic')
+      const play = vi.spyOn(audioEngine, 'play')
+      const { wrapper } = await setup()
+      expect(startMusic).toHaveBeenCalled()
+
+      wrapper.findComponent({ name: 'BattleArena' }).vm.$emit('cue', 'punch')
+      expect(play).toHaveBeenCalledWith('punch')
+    })
+
+    it('turns the victory cue into a sad trombone when the AI wins', async () => {
+      const play = vi.spyOn(audioEngine, 'play')
+      const stopMusic = vi.spyOn(audioEngine, 'stopMusic')
+      const { store, wrapper } = await setup()
+      store.controllers.player2 = { kind: 'ai', difficulty: 'normal' }
+      store.state.phase = 'finished'
+      store.state.winnerId = 'player2'
+
+      wrapper.findComponent({ name: 'BattleArena' }).vm.$emit('cue', 'victory')
+      expect(play).toHaveBeenCalledWith('defeat')
+      expect(stopMusic).toHaveBeenCalled()
+    })
+
+    it('ticks during the last seconds of a human turn', async () => {
+      const play = vi.spyOn(audioEngine, 'play')
+      const { store } = await setup()
+      store.state.turnTimeLeft = 6
+      await flushPromises()
+      expect(play).not.toHaveBeenCalledWith('tick')
+      store.state.turnTimeLeft = 5
+      await flushPromises()
+      expect(play).toHaveBeenCalledWith('tick')
+    })
   })
 })

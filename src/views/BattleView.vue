@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { SoundName } from '@/audio/sfx'
 import AttackPanel from '@/components/battle/AttackPanel.vue'
 import BattleArena from '@/components/battle/BattleArena.vue'
 import BattleLog from '@/components/battle/BattleLog.vue'
 import TeamBench from '@/components/battle/TeamBench.vue'
 import TurnTimer from '@/components/battle/TurnTimer.vue'
 import GifCardView from '@/components/GifCard.vue'
+import SoundControls from '@/components/SoundControls.vue'
 import { TURN_DURATION_SECONDS } from '@/config/gameRules'
+import { useAudioStore } from '@/stores/audio'
 import { useGameStore } from '@/stores/game'
 import type { PlayerId } from '@/types'
 import { isKnockedOut } from '@/utils/gifs'
 
 const store = useGameStore()
+const audio = useAudioStore()
 const router = useRouter()
 
 const SIDES = ['player1', 'player2'] as const
@@ -36,11 +40,34 @@ watch(
   () => (tab.value = 'attack'),
 )
 
+// Countdown ticks in the last seconds, only when a human is the one who has to act.
+watch(
+  () => state.value.turnTimeLeft,
+  (timeLeft) => {
+    const humanMustAct = store.isHumanTurn || store.humanReplacementFor !== null
+    if (timeLeft > 0 && timeLeft <= 5 && humanMustAct && !busy.value) audio.play('tick')
+  },
+)
+
+/** Sounds come from the arena, in sync with its animations. */
+function onCue(sound: SoundName) {
+  if (sound === 'victory') {
+    audio.stopMusic()
+    audio.play(humanLost.value ? 'defeat' : 'victory')
+  } else {
+    audio.play(sound)
+  }
+}
+
 onMounted(() => {
   if (state.value.phase === 'idle') void router.replace({ name: 'home' })
+  else audio.startMusic()
 })
 
-onBeforeUnmount(() => store.reset())
+onBeforeUnmount(() => {
+  audio.stopMusic()
+  store.reset()
+})
 
 /** Guards against stale clicks: the store throws on actions that are no longer valid. */
 function act(action: () => void) {
@@ -57,6 +84,7 @@ function rematch() {
     playerNames: { player1: player1.name, player2: player2.name },
     controllers: { ...store.controllers },
   })
+  audio.startMusic()
 }
 
 function quit() {
@@ -72,6 +100,7 @@ function quit() {
         <h1 class="turn-title">
           Au tour de <span class="turn-name">{{ store.currentPlayer.name }}</span>
         </h1>
+        <SoundControls class="sound" />
         <button type="button" class="quit" @click="quit">Quitter</button>
       </div>
       <TurnTimer :time-left="state.turnTimeLeft" :total="TURN_DURATION_SECONDS" />
@@ -83,6 +112,7 @@ function quit() {
         :players="state.players"
         :log="state.log"
         @busy="store.setPresentationBusy($event)"
+        @cue="onCue"
       />
     </section>
 
@@ -508,6 +538,19 @@ function quit() {
 
 /* The arena already shows the GIFs: keep fighter cards short on phones. */
 @media (max-width: 639px) {
+  .turn-heading {
+    flex-wrap: wrap;
+  }
+
+  .turn-title {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .sound {
+    margin-left: auto;
+  }
+
   .fighter-panel :deep(.window),
   .fighter-panel :deep(.strip) {
     display: none;

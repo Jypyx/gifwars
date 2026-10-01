@@ -11,6 +11,7 @@ src/
   types/        Types du jeu (GifCard, Attack, Synergy, état de partie…)
   config/       Règles et constantes d'équilibrage (timer, Quick Match, statuts)
   data/         Mocks : gifsData.ts (catalogue), synergies.ts, universes.ts (thèmes de cartes)
+  audio/        Sons et musique synthétisés en Web Audio (aucun fichier audio)
   game/         Moteur de combat et IA (fonctions pures, aléatoire injectable)
     arena/      Arène PixiJS : rejoue le journal du store en animations BD
   utils/        Fonctions pures (instanciation d'un GIF, détection des synergies)

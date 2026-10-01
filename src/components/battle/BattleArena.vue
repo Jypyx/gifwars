@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { ArenaRenderer } from '@/game/arena/ArenaRenderer'
+import type { SoundName } from '@/audio/sfx'
 import type { BattleLogEntry, GifCard, Player, PlayerId } from '@/types'
 
 const props = defineProps<{
@@ -8,7 +9,7 @@ const props = defineProps<{
   log: readonly BattleLogEntry[]
 }>()
 
-const emit = defineEmits<{ busy: [busy: boolean] }>()
+const emit = defineEmits<{ busy: [busy: boolean]; cue: [sound: SoundName] }>()
 
 const host = useTemplateRef<HTMLDivElement>('host')
 
@@ -60,6 +61,7 @@ onMounted(() => {
     const created = await ArenaRenderer.create(el, {
       reducedMotion,
       findGif,
+      onCue: (sound) => emit('cue', sound),
       playerColors: {
         player1: color('--player1', '#E53935'),
         player2: color('--player2', '#1E88E5'),

@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import GifCardView from '@/components/GifCard.vue'
+import SoundControls from '@/components/SoundControls.vue'
 import { AI_DIFFICULTIES, AI_PLAYER_NAME } from '@/config/ai'
 import { TEAM_SIZE, TURN_DURATION_SECONDS } from '@/config/gameRules'
 import { STATUS_INFO } from '@/config/statusInfo'
@@ -39,6 +40,7 @@ const gifName = (id: string) => GIFS_DATA.find((g) => g.id === id)?.name ?? id
 <template>
   <main class="home">
     <header class="hero">
+      <SoundControls class="sound" />
       <h1 class="comic-title logo">GifWars</h1>
       <p class="comic-caption tagline">Le choc des GIFs de la Pop Culture</p>
     </header>
@@ -156,10 +158,15 @@ const gifName = (id: string) => GIFS_DATA.find((g) => g.id === id)?.name ?? id
 }
 
 .hero {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 0.75rem;
   padding-top: 0.5rem;
+}
+
+.sound {
+  justify-self: end;
 }
 
 .logo {
@@ -351,6 +358,12 @@ const gifName = (id: string) => GIFS_DATA.find((g) => g.id === id)?.name ?? id
 }
 
 @media (min-width: 720px) {
+  .sound {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
   .players {
     grid-template-columns: 1fr auto 1fr auto;
   }
