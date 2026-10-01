@@ -29,6 +29,17 @@ const IMPACT_SOUNDS: Record<AttackType, SoundName> = {
 
 const SIDES: readonly PlayerId[] = ['player1', 'player2']
 
+/**
+ * Portrait layout, as fractions of the arena size. The top ~15% and bottom ~20% are left
+ * to the HUD (status boxes, buttons, dialog box).
+ */
+const LAYOUT = {
+  player1: { x: 0.3, y: 0.57 },
+  player2: { x: 0.68, y: 0.31 },
+  center: { x: 0.5, y: 0.44 },
+  fighterWidth: (width: number, height: number) => Math.min(width * 0.48, height * 0.3 * (4 / 3)),
+}
+
 export class ArenaRenderer {
   private readonly background = new Graphics()
   private readonly vs: Text = createVsLabel()
@@ -93,11 +104,12 @@ export class ArenaRenderer {
     this.width = width
     this.height = height
     this.app.renderer.resize(width, height)
-    drawBackground(this.background, width, height)
-    this.vs.position.set(width / 2, height / 2)
-    this.vs.scale.set(Math.max(0.5, Math.min(1.2, width / 700)))
+    const center = { x: width * LAYOUT.center.x, y: height * LAYOUT.center.y }
+    drawBackground(this.background, width, height, center)
+    this.vs.position.set(center.x, center.y)
+    this.vs.scale.set(Math.max(0.5, Math.min(1, width / 500)))
 
-    const fighterW = Math.min(width * 0.4, height * 0.62 * (4 / 3))
+    const fighterW = LAYOUT.fighterWidth(width, height)
     for (const side of SIDES) {
       const { x, y } = this.slot(side)
       this.fighters[side].root.position.set(x, y)
@@ -250,8 +262,8 @@ export class ArenaRenderer {
           this.fx,
           ticker,
           entry.onomatopoeia ?? 'VICTOIRE !',
-          this.width / 2,
-          this.height / 2,
+          this.width * LAYOUT.center.x,
+          this.height * LAYOUT.center.y,
           {
             fill: '#FFE81F',
             textColor: this.options.playerColors[event.winnerId],
@@ -290,11 +302,9 @@ export class ArenaRenderer {
     return this.options.findGif(gifId)?.side
   }
 
-  /** Player 1 bottom-left, player 2 top-right (classic face-off layout). */
+  /** Player bottom-left, AI top-right, like in Pokémon. */
   private slot(side: PlayerId) {
-    return side === 'player1'
-      ? { x: this.width * 0.26, y: this.height * 0.6 }
-      : { x: this.width * 0.74, y: this.height * 0.4 }
+    return { x: this.width * LAYOUT[side].x, y: this.height * LAYOUT[side].y }
   }
 
   private baseFontSize(): number {

@@ -70,6 +70,23 @@ describe('useGameStore', () => {
     expect(store.state.turnTimeLeft).toBe(TURN_DURATION_SECONDS - 2)
   })
 
+  it('freezes the timer and the AI while paused', () => {
+    const store = useGameStore()
+    store.startQuickMatch({
+      rng: () => 0.99,
+      firstPlayer: 'player2',
+      controllers: { player2: { kind: 'ai', difficulty: 'normal' } },
+    })
+    store.setPaused(true)
+    vi.advanceTimersByTime(30_000)
+    expect(store.state.turnTimeLeft).toBe(TURN_DURATION_SECONDS)
+    expect(store.state.log).toHaveLength(0)
+
+    store.setPaused(false)
+    vi.advanceTimersByTime(AI_THINK_MS)
+    expect(store.state.log.length).toBeGreaterThan(0)
+  })
+
   describe('against the AI', () => {
     const startVsAi = (firstPlayer: 'player1' | 'player2') => {
       const store = useGameStore()

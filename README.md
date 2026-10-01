@@ -16,11 +16,14 @@ src/
     arena/      Arène PixiJS : rejoue le journal du store en animations BD
   utils/        Fonctions pures (instanciation d'un GIF, détection des synergies)
   stores/       Stores Pinia (useGameStore : partie, tours, timer)
-  components/   GifCard.vue (carte façon Pokémon) et panneaux de combat
-  views/        Accueil (Quick Match, catalogue) et écran de combat
+  components/   GifCard.vue (carte façon Pokémon), HUD et modales de combat
+    ui/         Briques d'interface : icônes, boutons icônes, modale
+  views/        Écran d'introduction (SplashView) et écran de combat (BattleView)
 ```
 
-Modes : contre l'ordinateur (GifBot, 3 niveaux de difficulté) ou à deux sur le même écran.
+Interface de jeu mobile first au format 9:16 (plein écran en hauteur sur téléphone), sans scroll.
+On affronte GifBot, l'ordinateur, en 3 niveaux de difficulté. Le moteur gère aussi deux humains
+sur le même écran, mode non exposé dans l'interface pour l'instant.
 
 ## Commandes
 

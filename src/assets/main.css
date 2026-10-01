@@ -21,15 +21,25 @@
   margin: 0;
 }
 
+/* The page never scrolls: everything lives inside the game frame. */
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
-  min-height: 100dvh;
-  background-color: var(--paper);
-  background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
-  background-size: 8px 8px;
+  display: grid;
+  place-items: center;
+  background-color: #1b1b3a;
+  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1.5px, transparent 1.5px);
+  background-size: 14px 14px;
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
 }
 
 img {
@@ -45,6 +55,37 @@ button {
 :focus-visible {
   outline: 3px solid var(--pop-blue);
   outline-offset: 3px;
+}
+
+/**
+ * Game frame: 9:16 on desktop / tablets, full height on phones taller than 9:16.
+ * Sizes inside use container units (cqw / cqh) so the UI scales like a game canvas.
+ */
+.game-frame {
+  position: relative;
+  width: min(100vw, calc(100vh * 9 / 16));
+  width: min(100vw, calc(100dvh * 9 / 16));
+  height: 100vh;
+  height: 100dvh;
+  /* clip, unlike hidden, also forbids scrolling triggered by focus or scrollIntoView. */
+  overflow: hidden;
+  overflow: clip;
+  container-type: size;
+  background: var(--paper);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/**
+ * A full-frame screen (splash, battle…). It carries the base font size: container units
+ * only refer to the frame from its descendants, not on the frame itself.
+ */
+.screen {
+  position: absolute;
+  inset: 0;
+  font-size: max(12px, 4cqw);
+  overflow: hidden;
+  overflow: clip;
 }
 
 /* --- Comic building blocks ------------------------------------------------ */
@@ -83,13 +124,13 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 48px;
-  padding: 0.5rem 1.25rem;
+  min-height: max(48px, 11cqw);
+  padding: 0.4em 1.2em;
   background: var(--btn-bg);
   border: var(--ink-width) solid var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.3em;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;

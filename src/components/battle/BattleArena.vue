@@ -9,7 +9,12 @@ const props = defineProps<{
   log: readonly BattleLogEntry[]
 }>()
 
-const emit = defineEmits<{ busy: [busy: boolean]; cue: [sound: SoundName] }>()
+const emit = defineEmits<{
+  busy: [busy: boolean]
+  cue: [sound: SoundName]
+  /** The log entry currently being animated. */
+  playing: [entry: BattleLogEntry]
+}>()
 
 const host = useTemplateRef<HTMLDivElement>('host')
 
@@ -83,7 +88,11 @@ watch(
   (length) => {
     for (; played < length; played++) {
       const entry = props.log[played]
-      if (entry) enqueue(async () => renderer?.play(entry))
+      if (entry)
+        enqueue(async () => {
+          if (!unmounted) emit('playing', entry)
+          await renderer?.play(entry)
+        })
     }
   },
 )

@@ -36,6 +36,10 @@ export const useGameStore = defineStore('game', () => {
    * so nobody loses time watching an animation.
    */
   const presentationBusy = ref(false)
+  /** Set by the view while a menu (quit confirmation, inventory…) covers the battle. */
+  const paused = ref(false)
+  /** Nothing should happen on its own: animation playing or game paused. */
+  const isOnHold = () => presentationBusy.value || paused.value
   let rng: Rng = Math.random
   let timerId: ReturnType<typeof setInterval> | null = null
   let aiTimerId: ReturnType<typeof setTimeout> | null = null
@@ -90,7 +94,7 @@ export const useGameStore = defineStore('game', () => {
 
   function tick() {
     if (!isPlaying.value) return stopTimer()
-    if (presentationBusy.value) return
+    if (isOnHold()) return
     state.value.turnTimeLeft = Math.max(0, state.value.turnTimeLeft - 1)
     if (state.value.turnTimeLeft === 0) {
       handleTimeout(state.value, rng)
@@ -133,7 +137,7 @@ export const useGameStore = defineStore('game', () => {
 
   function scheduleAi() {
     cancelAi()
-    if (!isPlaying.value || presentationBusy.value) return
+    if (!isPlaying.value || isOnHold()) return
     const actor = pendingAiActor()
     if (!actor) return
     aiTimerId = setTimeout(() => {
@@ -160,6 +164,7 @@ export const useGameStore = defineStore('game', () => {
       player2: options.controllers?.player2 ?? HUMAN,
     }
     presentationBusy.value = false
+    paused.value = false
     state.value = createQuickMatchState(rng, options)
     matchId.value += 1
     afterChange()
@@ -188,10 +193,17 @@ export const useGameStore = defineStore('game', () => {
     if (isPlaying.value) afterChange()
   }
 
+  function setPaused(value: boolean) {
+    if (paused.value === value) return
+    paused.value = value
+    if (isPlaying.value) afterChange()
+  }
+
   function reset() {
     stopTimer()
     cancelAi()
     presentationBusy.value = false
+    paused.value = false
     controllers.value = { player1: HUMAN, player2: HUMAN }
     state.value = createIdleState()
   }
@@ -201,6 +213,7 @@ export const useGameStore = defineStore('game', () => {
     matchId,
     controllers,
     presentationBusy,
+    paused,
     isPlaying,
     isVsAi,
     isHumanTurn,
@@ -219,6 +232,7 @@ export const useGameStore = defineStore('game', () => {
     switchTo,
     chooseReplacement,
     setPresentationBusy,
+    setPaused,
     reset,
   }
 })

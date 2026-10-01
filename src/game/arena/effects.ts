@@ -108,12 +108,16 @@ export async function floatText(
 }
 
 /** Alternating-ray sunburst background with a "VS" in the middle. */
-export function drawBackground(g: Graphics, width: number, height: number): void {
+export function drawBackground(
+  g: Graphics,
+  width: number,
+  height: number,
+  center = { x: width / 2, y: height / 2 },
+): void {
   g.clear()
   g.rect(0, 0, width, height).fill('#FFD000')
 
-  const cx = width / 2
-  const cy = height / 2
+  const { x: cx, y: cy } = center
   const radius = Math.hypot(width, height)
   const rays = 28
   for (let i = 0; i < rays; i += 2) {

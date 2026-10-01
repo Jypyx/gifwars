@@ -30,5 +30,31 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <RouterView />
+  <div class="game-frame">
+    <RouterView v-slot="{ Component }">
+      <Transition name="screen">
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
+  </div>
 </template>
+
+<style>
+/* Screen change: the old screen zooms away while the new one pops in. */
+.screen-enter-active,
+.screen-leave-active {
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease;
+}
+
+.screen-enter-from {
+  opacity: 0;
+  transform: scale(1.08);
+}
+
+.screen-leave-to {
+  opacity: 0;
+  transform: scale(0.94);
+}
+</style>
