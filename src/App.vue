@@ -1,0 +1,63 @@
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import { useAudioStore } from '@/stores/audio'
+
+const audio = useAudioStore()
+const route = useRoute()
+
+/** Browsers only allow audio after a user gesture: unlock on the first interaction. */
+const unlock = () => audio.unlock()
+
+/** Short UI click for every enabled button or toggle, in one place. */
+function onClick(event: MouseEvent) {
+  const target = event.target as Element | null
+  // Labels forward their click to their input: only the input counts, to avoid double clicks.
+  const control = target?.closest('button') ?? (target?.matches('.choice input') ? target : null)
+  if (control && !(control as HTMLButtonElement | HTMLInputElement).disabled) audio.play('click')
+}
+
+onMounted(() => {
+  window.addEventListener('pointerdown', unlock)
+  window.addEventListener('keydown', unlock)
+  document.addEventListener('click', onClick)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pointerdown', unlock)
+  window.removeEventListener('keydown', unlock)
+  document.removeEventListener('click', onClick)
+})
+</script>
+
+<template>
+  <!-- Comic sunburst behind the whole window, centered on the game frame. -->
+  <div class="world-burst" :class="{ spinning: route.name === 'home' }" aria-hidden="true" />
+  <div class="game-frame">
+    <RouterView v-slot="{ Component }">
+      <Transition name="screen">
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
+  </div>
+</template>
+
+<style>
+/* Screen change: the old screen zooms away while the new one pops in. */
+.screen-enter-active,
+.screen-leave-active {
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease;
+}
+
+.screen-enter-from {
+  opacity: 0;
+  transform: scale(1.08);
+}
+
+.screen-leave-to {
+  opacity: 0;
+  transform: scale(0.94);
+}
+</style>

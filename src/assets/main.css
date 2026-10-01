@@ -1,0 +1,213 @@
+:root {
+  --burst-dark: #ffd000;
+  --burst-light: #ffe81f;
+  /* Vertical position of the sunburst center, shared by the CSS backdrop and the arena. */
+  --burst-center-y: 42%;
+  --ink: #111;
+  --paper: #fffbea;
+  --pop-yellow: #ffe81f;
+  --pop-red: #e53935;
+  --pop-blue: #1e88e5;
+  --pop-green: #43a047;
+  --player1: #e53935;
+  --player2: #1e88e5;
+  --ink-width: 3px;
+  --ink-shadow: 5px 5px 0 var(--ink);
+  --font-display: 'Bangers', 'Impact', sans-serif;
+  --font-body: 'Comic Neue', 'Comic Sans MS', sans-serif;
+  --gutter: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* The page never scrolls: everything lives inside the game frame. */
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  background: var(--burst-dark);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pop-blue);
+  outline-offset: 3px;
+}
+
+/**
+ * Game frame: 9:16 on desktop / tablets, full height on phones taller than 9:16.
+ * Sizes inside use container units (cqw / cqh) so the UI scales like a game canvas.
+ */
+.game-frame {
+  position: relative;
+  z-index: 1;
+  width: min(100vw, calc(100vh * 9 / 16));
+  width: min(100vw, calc(100dvh * 9 / 16));
+  height: 100vh;
+  height: 100dvh;
+  /* clip, unlike hidden, also forbids scrolling triggered by focus or scrollIntoView. */
+  overflow: hidden;
+  overflow: clip;
+  container-type: size;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/**
+ * Sunburst covering the whole window, whatever its width. The frame is centered and full
+ * height, so the rays' center lines up with the frame's own center at any resolution.
+ */
+.world-burst {
+  position: fixed;
+  left: 50%;
+  top: var(--burst-center-y);
+  z-index: 0;
+  width: 170vmax;
+  height: 170vmax;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(
+    var(--burst-light) 0deg 7.5deg,
+    var(--burst-dark) 7.5deg 15deg
+  );
+  pointer-events: none;
+}
+
+/* Halftone dots fading in towards the edges, for a printed look. */
+.world-burst::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(rgb(229 57 53 / 0.25) 22%, transparent 24%) 0 0 / 1.4vmin 1.4vmin;
+  mask-image: radial-gradient(circle, transparent 10%, #000 32%);
+}
+
+.world-burst.spinning {
+  animation: world-spin 60s linear infinite;
+}
+
+@keyframes world-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-burst.spinning {
+    animation: none;
+  }
+}
+
+/**
+ * A full-frame screen (splash, battle…). It carries the base font size: container units
+ * only refer to the frame from its descendants, not on the frame itself.
+ */
+.screen {
+  position: absolute;
+  inset: 0;
+  font-size: max(12px, 4cqw);
+  overflow: hidden;
+  overflow: clip;
+}
+
+/* --- Comic building blocks ------------------------------------------------ */
+
+/** A comic book panel: thick ink border and hard drop shadow. */
+.comic-panel {
+  position: relative;
+  background: #fff;
+  border: var(--ink-width) solid var(--ink);
+  box-shadow: var(--ink-shadow);
+}
+
+/** Narrative caption box, like the yellow boxes at the top of comic panels. */
+.comic-caption {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  background: var(--pop-yellow);
+  border: 2px solid var(--ink);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.comic-title {
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  color: var(--pop-yellow);
+  -webkit-text-stroke: var(--ink-width) var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 5px 5px 0 var(--ink);
+}
+
+.comic-btn {
+  --btn-bg: var(--pop-yellow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: max(48px, 11cqw);
+  padding: 0.4em 1.2em;
+  background: var(--btn-bg);
+  border: var(--ink-width) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.3em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease;
+}
+
+.comic-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.comic-btn:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.comic-btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

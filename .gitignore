@@ -72,3 +72,10 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Vite / ESLint extras
+dist-ssr/
+*.local
+.eslintcache
+*.timestamp-*-*.mjs
+__screenshots__/
